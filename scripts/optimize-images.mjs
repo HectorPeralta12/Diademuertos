@@ -7,6 +7,9 @@ const images = [
   // The upscaled painting (4×), served at the original size and at 2× for dense screens
   ['assets/xolo/hero_upscaled.webp', 'xolo-hero.webp', 1672],
   ['assets/xolo/hero_upscaled.webp', 'xolo-hero@2x.webp', 3344],
+  // The tall night sky behind the 2D sections
+  ['assets/altar/cielo_upscaled.webp', 'cielo-900.webp', 900],
+  ['assets/altar/cielo_upscaled.webp', 'cielo-1600.webp', 1600],
   ['assets/altar/checkpoints-pictoricos-v2/00-vista-general.png', 'altar-general.webp'],
   ['assets/altar/checkpoints-pictoricos-v2/01-flores-velas-copal.png', 'altar-flores-velas-copal.webp'],
   ['assets/altar/checkpoints-pictoricos-v2/02-comida-agua.png', 'altar-comida-agua.webp'],

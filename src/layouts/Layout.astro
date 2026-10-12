@@ -36,8 +36,22 @@ const chapters = [
   <body>
     <a class="skip mono" href="#contenido">Saltar al contenido</a>
 
-    <!-- The storybook night under every 2D section: watercolor wash, light and stars -->
+    <!-- The storybook night under every 2D section: one tall painting, from the sunset
+         over the town up to the moon, that rises slowly as the story moves on, so
+         sections slide over it and the sky never shows a seam -->
     <div class="cielo" aria-hidden="true">
+      <img
+        class="pintura"
+        src="/images/cielo-900.webp"
+        srcset="/images/cielo-900.webp 900w, /images/cielo-1600.webp 1600w"
+        sizes="100vw"
+        alt=""
+        width="1600"
+        height="4684"
+        decoding="async"
+        fetchpriority="low"
+        data-cielo-pintura
+      />
       <canvas data-cielo></canvas>
     </div>
 
@@ -88,6 +102,43 @@ const chapters = [
       });
       document.querySelectorAll('[data-scene]:not([data-pintada])').forEach((el) => io.observe(el));
       if (still) window.addEventListener('scroll', () => requestAnimationFrame(sky.draw), { passive: true });
+
+      // The painting rises from the sunset to the moon across the 2D half of the story
+      const pintura = document.querySelector<HTMLImageElement>('[data-cielo-pintura]')!;
+      const from = document.querySelector<HTMLElement>('[data-scene="lema"]');
+      const to = document.querySelector<HTMLElement>('[data-scene="cierre"]');
+      let start = 0;
+      let end = 1;
+      const measure = () => {
+        if (!from || !to) return;
+        start = from.offsetTop;
+        end = Math.max(start + 1, to.offsetTop - window.innerHeight);
+      };
+      let queued = false;
+      const pan = () => {
+        queued = false;
+        const t = Math.min(1, Math.max(0, (window.scrollY - start) / (end - start)));
+        const travel = Math.max(0, pintura.offsetHeight - window.innerHeight);
+        pintura.style.transform = `translate3d(0, ${(-travel * (1 - t)).toFixed(1)}px, 0)`;
+      };
+      const queue = () => {
+        if (!queued) {
+          queued = true;
+          requestAnimationFrame(pan);
+        }
+      };
+      measure();
+      pan();
+      window.addEventListener('scroll', queue, { passive: true });
+      window.addEventListener('resize', () => {
+        measure();
+        queue();
+      });
+      window.addEventListener('load', () => {
+        measure();
+        queue();
+      });
+      pintura.addEventListener('load', queue);
     </script>
 
   </body>
@@ -257,29 +308,38 @@ const chapters = [
     position: fixed;
     inset: 0;
     z-index: -1;
+    overflow: hidden;
     pointer-events: none;
-    /* Light pooling from above, then the watercolor bloom of the paper, then a storybook vignette */
-    background:
-      radial-gradient(ellipse 80% 60% at 50% -10%, var(--luz), transparent 70%),
-      radial-gradient(ellipse 120% 90% at 50% 45%, transparent 55%, rgb(6 4 24 / 0.5));
-    transition: --luz 900ms var(--ease);
   }
-  .cielo::before {
+  .cielo .pintura {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    will-change: transform;
+  }
+  /* Over the painting: the hour of each section as a light tint, the light pooling
+     from above, and a storybook vignette that keeps the copy readable */
+  .cielo::after {
     content: '';
     position: absolute;
     inset: 0;
-    /* Big, soft pigment blooms, like a watercolor wash drying unevenly */
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='1000'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0045' numOctaves='4' seed='9' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E");
-    background-size: cover;
-    mix-blend-mode: soft-light;
-    opacity: 0.55;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, var(--luz), transparent 70%),
+      radial-gradient(ellipse 120% 90% at 50% 45%, transparent 50%, rgb(6 4 24 / 0.55)),
+      color-mix(in srgb, var(--bg) 38%, transparent);
+    transition: --luz 900ms var(--ease), background-color 900ms var(--ease);
   }
   .cielo canvas {
     position: absolute;
     inset: 0;
+    z-index: 1;
     width: 100%;
     height: 100%;
-    opacity: var(--estrellas);
+    /* The painting has its own stars: these only add the twinkle */
+    opacity: calc(var(--estrellas) * 0.6);
     transition: opacity 900ms var(--ease);
   }
 

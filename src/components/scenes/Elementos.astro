@@ -34,6 +34,7 @@ const STEP = (1 - INTRO) / elements.length;
 const at = elements.map((_, i) => INTRO + i * STEP);
 const beat = (i: number) =>
   i === elements.length - 1 ? at[i].toFixed(3) : `${at[i].toFixed(3)} ${at[i + 1].toFixed(3)}`;
+import Marco from '../Marco.astro';
 ---
 
 <section
@@ -46,6 +47,7 @@ const beat = (i: number) =>
   style="--len: 900"
 >
   <div class="stage">
+    <Marco corners={['tl', 'bl']} seed={3} />
     <div class="collage" aria-hidden="true">
       {
         elements.map((e) => (

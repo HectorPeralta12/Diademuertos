@@ -22,10 +22,12 @@ const pos = (y: number) => ((y - FIRST) / (LAST - FIRST)) * 100;
 const N = milestones.length;
 const at = milestones.map((_, i) => 0.04 + (i / N) * 0.94);
 const beat = (i: number) => (i === N - 1 ? at[i].toFixed(3) : `${at[i].toFixed(3)} ${at[i + 1].toFixed(3)}`);
+import Marco from '../Marco.astro';
 ---
 
 <section class="scene historia" id="historia" data-scene="historia" data-theme="morado" data-chapter="historia" style="--len: 820">
   <div class="stage">
+    <Marco corners={['tr']} seed={11} />
     <p class="giant" aria-hidden="true"><span data-year-display></span></p>
 
     <ol class="captions stack">

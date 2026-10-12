@@ -16,10 +16,12 @@ const flags = [
 ];
 
 const word = 'el viento'.split('');
+import Marco from '../Marco.astro';
 ---
 
 <section class="scene papel" data-scene="papel" data-theme="rosa" data-chapter="elementos" style="--len: 320">
   <div class="stage">
+    <Marco corners={['br']} seed={5} />
     <svg width="0" height="0" aria-hidden="true" class="defs">
       <defs>
         <mask id="cut-flor" maskContentUnits="objectBoundingBox">

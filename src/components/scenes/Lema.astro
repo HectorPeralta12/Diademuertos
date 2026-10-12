@@ -6,6 +6,7 @@
  * the page. Everything follows --p; the gold dust is the only JavaScript.
  */
 import { XOLO_BOX as BOX, XOLO_D } from '../../scripts/xolo-path';
+import Marco from '../Marco.astro';
 
 const lines = ['Mientras alguien los recuerde,', 'siguen encontrando', 'el camino a casa.'];
 
@@ -19,6 +20,7 @@ const EYE = { x: 1212, y: 352 };
 
 <section class="scene lema" data-scene="lema" data-theme="cempasuchil" data-chapter="ofrenda" style={`--len: 420; --n: ${total}`}>
   <div class="stage">
+    <Marco corners={['bl', 'br']} seed={2} />
     <p class="tagline">
       {
         words.map((line) => (

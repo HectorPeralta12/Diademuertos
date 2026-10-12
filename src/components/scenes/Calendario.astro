@@ -49,10 +49,12 @@ const at = feasts.map((_, i) => INTRO + i * step);
 const CATHOLIC = 0.82;
 const [nx, ny] = point(10 + 1.5 / 30, 186);
 const [lx, ly] = point(10 + 1.5 / 30, 214);
+import Marco from '../Marco.astro';
 ---
 
 <section class="scene calendario" data-scene="calendario" data-theme="copal" data-chapter="historia" style="--len: 620">
   <div class="stage">
+    <Marco corners={['tr', 'br']} seed={7} />
     <svg class="ring" viewBox="0 0 400 400" aria-hidden="true">
       <circle cx={C} cy={C} r="128" class="track" />
       {

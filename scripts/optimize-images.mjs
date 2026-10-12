@@ -10,7 +10,8 @@ const images = [
   // The tall night sky behind the 2D sections
   ['assets/altar/cielo_upscaled.webp', 'cielo-900.webp', 900],
   ['assets/altar/cielo_upscaled.webp', 'cielo-1600.webp', 1600],
-  ['assets/altar/checkpoints-pictoricos-v2/00-vista-general.png', 'altar-general.webp'],
+  // Same painting as the 4K copy the altar scene swaps to, so the swap shows no change
+  ['assets/altar/altar-general-4k.png', 'altar-general.webp', 1669],
   ['assets/altar/checkpoints-pictoricos-v2/01-flores-velas-copal.png', 'altar-flores-velas-copal.webp'],
   ['assets/altar/checkpoints-pictoricos-v2/02-comida-agua.png', 'altar-comida-agua.webp'],
   ['assets/altar/checkpoints-pictoricos-v2/03-retratos-papel-picado.png', 'altar-retratos-papel-picado.webp'],

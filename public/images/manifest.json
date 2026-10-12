@@ -16,12 +16,28 @@
     "webpBytes": 835226
   },
   {
-    "source": "assets/altar/checkpoints-pictoricos-v2/00-vista-general.png",
+    "source": "assets/altar/cielo_upscaled.webp",
+    "url": "/images/cielo-900.webp",
+    "width": 900,
+    "height": 2635,
+    "originalBytes": 2385248,
+    "webpBytes": 267702
+  },
+  {
+    "source": "assets/altar/cielo_upscaled.webp",
+    "url": "/images/cielo-1600.webp",
+    "width": 1600,
+    "height": 4684,
+    "originalBytes": 2385248,
+    "webpBytes": 593882
+  },
+  {
+    "source": "assets/altar/altar-general-4k.png",
     "url": "/images/altar-general.webp",
     "width": 1669,
     "height": 942,
-    "originalBytes": 2583485,
-    "webpBytes": 353732
+    "originalBytes": 10332371,
+    "webpBytes": 330776
   },
   {
     "source": "assets/altar/checkpoints-pictoricos-v2/01-flores-velas-copal.png",

@@ -2,10 +2,11 @@
 /**
  * Opening: the Xolo keeps watch, its painting kept alive in code (stars,
  * falling petals, candles, a blink). As you scroll, the copy leaves and the
- * camera follows the Xolo's gaze up to the brightest star; the star flares,
- * and out of its light the camera comes down from the altar's sky onto the
- * whole altar. The last frame is the first view of the next scene, so the
- * hand over is invisible. Both paintings stay at full resolution all along.
+ * camera follows the Xolo's gaze up into the sky; cempasúchil blooms until it
+ * covers the screen, then the flowers open and shed their petals, and behind
+ * them the camera comes down onto the whole altar. The last frame is the first
+ * view of the next scene, so the hand over is invisible. Both paintings stay
+ * at full resolution all along.
  */
 
 // Share of the scene that holds on the painting before the camera starts moving
@@ -16,7 +17,7 @@ const STAR = { x: 0.2105, y: 0.1254 };
 const ALTAR_TOP = { x: 0.548, y: 0.24 };
 ---
 
-<section data-pintada class="scene inicio" id="inicio" data-scene="inicio" data-theme="noche" data-chapter="ofrenda" style="--len: 380" data-hold={HOLD} data-star={JSON.stringify(STAR)} data-altar-top={JSON.stringify(ALTAR_TOP)}>
+<section data-pintada class="scene inicio" id="inicio" data-scene="inicio" data-theme="noche" data-chapter="ofrenda" style="--len: 380" data-hold={HOLD}>
   <div class="stage" style={`--hold: ${HOLD}; --sx: ${STAR.x * 100}%; --sy: ${STAR.y * 100}%; --ax: ${ALTAR_TOP.x * 100}%; --ay: ${ALTAR_TOP.y * 100}%`}>
     <div class="art" aria-hidden="true" data-art>
       <img src="/images/xolo-hero.webp" srcset="/images/xolo-hero.webp 1672w, /images/xolo-hero@2x.webp 3344w" sizes="max(100vw, 177.7vh)" alt="" width="1672" height="941" fetchpriority="high" decoding="async" />
@@ -25,26 +26,11 @@ const ALTAR_TOP = { x: 0.548, y: 0.24 };
 
     <!-- The same painting and framing as the altar scene's first view -->
     <div class="altar" aria-hidden="true" data-altar>
-      <img src="/images/altar-general.webp" alt="" width="1669" height="942" decoding="async" />
+      <img src="/images/altar-general-4k.webp" alt="" width="1669" height="942" decoding="async" fetchpriority="low" />
     </div>
 
-    <!-- The wishing star: it flares as the camera reaches it -->
-    <div class="destello" aria-hidden="true" data-destello>
-      <div class="luz"></div>
-      <svg viewBox="-100 -100 200 200">
-        <defs>
-          <radialGradient id="destello-rayo">
-            <stop offset="0" stop-color="#ffffff" />
-            <stop offset="0.25" stop-color="#fff3d2" />
-            <stop offset="1" stop-color="#ffd27a" stop-opacity="0" />
-          </radialGradient>
-        </defs>
-        <!-- Long thin rays and a shorter diagonal pair, the storybook sparkle -->
-        <path d="M0 -100 Q 2.2 -2.2 100 0 Q 2.2 2.2 0 100 Q -2.2 2.2 -100 0 Q -2.2 -2.2 0 -100 Z" fill="url(#destello-rayo)" />
-        <path d="M0 -100 Q 2.2 -2.2 100 0 Q 2.2 2.2 0 100 Q -2.2 2.2 -100 0 Q -2.2 -2.2 0 -100 Z" fill="url(#destello-rayo)" transform="rotate(45) scale(0.45)" />
-        <circle r="7" fill="#fff" />
-      </svg>
-    </div>
+    <!-- Cempasúchil that blooms over the screen and opens to show the altar -->
+    <canvas class="flores" aria-hidden="true" data-flores></canvas>
     <div class="shade" aria-hidden="true"></div>
 
     <div class="copy" id="contenido">
@@ -66,6 +52,7 @@ const ALTAR_TOP = { x: 0.548, y: 0.24 };
   import { $ } from '../../scripts/dom';
   import { clamp, onProgress, reducedMotion } from '../../scripts/scenes';
   import { ambience } from '../../scripts/xolo-ambience';
+  import { florecer } from '../../scripts/florecer';
 
   const scene = $('[data-scene="inicio"]')!;
   const stage = $('.stage', scene)!;
@@ -81,14 +68,16 @@ const ALTAR_TOP = { x: 0.548, y: 0.24 };
     sync();
   }).observe(stage);
 
-  const art = $('[data-art]', scene)!;
-  const altar = $('[data-altar]', scene)!;
-  const STAR = JSON.parse(scene.dataset.star!) as { x: number; y: number };
-  const ALTAR_TOP = JSON.parse(scene.dataset.altarTop!) as { x: number; y: number };
+  const flores = florecer($<HTMLCanvasElement>('[data-flores]', scene)!);
+  let last = 0;
+  new ResizeObserver(() => {
+    flores.layout();
+    update(last);
+  }).observe($('[data-flores]', scene)!);
   const smooth = (x: number) => x * x * (3 - 2 * x);
-  const bell = (x: number, at: number, width: number) => Math.max(0, 1 - Math.abs(x - at) / width);
 
   function update(p: number) {
+    last = p;
     // Once the camera lands, the altar scene underneath holds the same frame: hand over instantly
     scene.classList.toggle('is-done', p >= 0.999);
     const t = clamp((p - hold) / (1 - hold));
@@ -96,28 +85,16 @@ const ALTAR_TOP = { x: 0.548, y: 0.24 };
       moving = t > 0.05;
       sync();
     }
-    // Up to the star: the painting grows around the star the Xolo looks at
-    const up = smooth(clamp(t / 0.55));
-    // Down to the altar: its painting starts close on its top and settles on the whole altar
-    const down = smooth(clamp((t - 0.42) / 0.58));
-    stage.style.setProperty('--zoom', (1 + 2.4 * up * up).toFixed(4));
-    stage.style.setProperty('--art', (1 - clamp((t - 0.46) / 0.1)).toFixed(3));
-    stage.style.setProperty('--altar', clamp((t - 0.42) / 0.12).toFixed(3));
-    stage.style.setProperty('--zoom-altar', (1 + 2.2 * (1 - down) * (1 - down)).toFixed(4));
-    // The flare peaks while one painting hands over to the other. It is born on the
-    // star the Xolo looks at and travels to the top of the altar, where the camera lands
-    const brillo = bell(t, 0.5, 0.16);
-    stage.style.setProperty('--brillo', brillo.toFixed(3));
-    if (brillo > 0) {
-      const s = art.getBoundingClientRect();
-      const a = altar.getBoundingClientRect();
-      const box = stage.getBoundingClientRect();
-      const k = smooth(clamp((t - 0.42) / 0.16));
-      const x = (s.left + s.width * STAR.x) * (1 - k) + (a.left + a.width * ALTAR_TOP.x) * k - box.left;
-      const y = (s.top + s.height * STAR.y) * (1 - k) + (a.top + a.height * ALTAR_TOP.y) * k - box.top;
-      stage.style.setProperty('--fx', `${x.toFixed(1)}px`);
-      stage.style.setProperty('--fy', `${y.toFixed(1)}px`);
-    }
+    // Up into the sky, following the Xolo's gaze
+    const up = smooth(clamp(t / 0.5));
+    stage.style.setProperty('--zoom', (1 + 1.6 * up * up).toFixed(4));
+    // The flowers cover the screen by 0.5; behind them the paintings change places
+    flores.draw(clamp((t - 0.24) / 0.3), clamp((t - 0.56) / 0.34));
+    stage.style.setProperty('--art', (1 - clamp((t - 0.5) / 0.04)).toFixed(3));
+    stage.style.setProperty('--altar', clamp((t - 0.5) / 0.04).toFixed(3));
+    // Down onto the whole altar while the flowers open
+    const down = smooth(clamp((t - 0.52) / 0.48));
+    stage.style.setProperty('--zoom-altar', (1 + 1.8 * (1 - down) * (1 - down)).toFixed(4));
   }
 
   onProgress(scene, update);
@@ -139,7 +116,6 @@ const ALTAR_TOP = { x: 0.548, y: 0.24 };
     --art: 1;
     --altar: 0;
     --zoom-altar: 1;
-    --brillo: 0;
     /* Framing pans a little toward the star as the camera rises */
     --from: 0.68;
     --t: clamp(0, (var(--p) - var(--hold)) / (1 - var(--hold)), 1);
@@ -189,29 +165,12 @@ const ALTAR_TOP = { x: 0.548, y: 0.24 };
     height: 100%;
   }
 
-  /* The wishing star: a warm bloom of light and a thin sparkle, on the star itself */
-  .destello {
-    --fx: 50%;
-    --fy: 40%;
+  .flores {
     position: absolute;
     inset: 0;
+    width: 100%;
+    height: 100%;
     pointer-events: none;
-    opacity: var(--brillo);
-  }
-  .destello .luz {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at var(--fx) var(--fy), rgb(255 248 228 / 0.92), rgb(255 214 140 / 0.5) calc(8% + 22% * var(--brillo)), rgb(255 190 110 / 0) calc(30% + 40% * var(--brillo)));
-  }
-  .destello svg {
-    position: absolute;
-    left: var(--fx);
-    top: var(--fy);
-    width: calc(18vmin + 70vmin * var(--brillo));
-    height: auto;
-    translate: -50% -50%;
-    rotate: calc(var(--brillo) * 12deg);
-    filter: drop-shadow(0 0 10px rgb(255 230 170 / 0.9));
   }
 
   /* A flat veil for the copy; it lifts before the camera moves */

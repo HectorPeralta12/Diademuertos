@@ -1,16 +1,25 @@
 ---
 /**
- * Tagline: the words start muted and light up one by one, in reading order,
- * as the scene scrolls. Driven only by --p, so it costs no JavaScript.
+ * Tagline and crossing. The words light up one by one while the painted Xolo
+ * sits below them, looking up. Then its outline is drawn in gold, the paint
+ * fades and the Xolo stays as a spirit of light, the guide for the 2D half of
+ * the page. Everything follows --p; the gold dust is the only JavaScript.
  */
+import { XOLO_D } from '../../scripts/xolo-path';
+
 const lines = ['Mientras alguien los recuerde,', 'siguen encontrando', 'el camino a casa.'];
 
 let n = 0;
 const words = lines.map((line) => line.split(' ').map((w) => ({ w, i: n++ })));
 const total = n;
+
+// The drawing's frame in the painting's pixels, with room for the glow
+const BOX = { x: 1050, y: 190, w: 520, h: 680 };
+// The eye, measured on the painting
+const EYE = { x: 1212, y: 352 };
 ---
 
-<section class="scene lema" data-scene="lema" data-theme="cempasuchil" data-chapter="ofrenda" style={`--len: 240; --n: ${total}`}>
+<section class="scene lema" data-scene="lema" data-theme="cempasuchil" data-chapter="ofrenda" style={`--len: 420; --n: ${total}`}>
   <div class="stage">
     <p class="tagline">
       {
@@ -25,14 +34,140 @@ const total = n;
         ))
       }
     </p>
+
+    <figure class="cruce" aria-hidden="true">
+      <svg viewBox={`${BOX.x} ${BOX.y} ${BOX.w} ${BOX.h}`} data-box={JSON.stringify(BOX)}>
+        <defs>
+          <clipPath id="xolo-recorte">
+            <path d={XOLO_D} />
+          </clipPath>
+          <radialGradient id="xolo-luz" cx="1250" cy="520" r="360" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#fff6d6" />
+            <stop offset="0.45" stop-color="#ffd06a" />
+            <stop offset="1" stop-color="#f29a1c" />
+          </radialGradient>
+          <filter id="xolo-halo" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="18" />
+          </filter>
+          <!-- The painting turned into light and shade, to give the spirit its volume -->
+          <filter id="xolo-relieve" color-interpolation-filters="sRGB">
+            <feColorMatrix type="saturate" values="0" />
+            <feComponentTransfer>
+              <feFuncR type="linear" slope="2.4" intercept="0.12" />
+              <feFuncG type="linear" slope="2.4" intercept="0.12" />
+              <feFuncB type="linear" slope="2.4" intercept="0.12" />
+            </feComponentTransfer>
+          </filter>
+          <filter id="xolo-brillo" x="-10%" y="-10%" width="120%" height="120%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        <g class="figura">
+          <!-- Spirit: a halo, then the body of light -->
+          <path class="halo" d={XOLO_D} fill="#ffc45a" filter="url(#xolo-halo)" />
+          <path class="espiritu" d={XOLO_D} fill="url(#xolo-luz)" />
+          <image class="relieve" href="/images/xolo-hero.webp" x="0" y="0" width="1672" height="941" clip-path="url(#xolo-recorte)" filter="url(#xolo-relieve)" />
+          <ellipse class="ojo" cx={EYE.x} cy={EYE.y} rx="5.5" ry="4" transform={`rotate(-12 ${EYE.x} ${EYE.y})`} />
+
+          <!-- The painted Xolo, cut out of the opening illustration -->
+          <image class="pintura" href="/images/xolo-hero.webp" x="0" y="0" width="1672" height="941" clip-path="url(#xolo-recorte)" />
+          <!-- Storybook ink line around the painting -->
+          <path class="tinta" d={XOLO_D} />
+          <!-- The gold line that draws itself -->
+          <path class="trazo" d={XOLO_D} pathLength="1" filter="url(#xolo-brillo)" data-trazo />
+        </g>
+      </svg>
+      <canvas data-polvo></canvas>
+    </figure>
   </div>
 </section>
 
+<script>
+  import { $ } from '../../scripts/dom';
+  import { onProgress, reducedMotion, segment } from '../../scripts/scenes';
+  import { polvo } from '../../scripts/polvo';
+
+  const scene = $('[data-scene="lema"]')!;
+  const svg = $<SVGSVGElement>('.cruce svg', scene)!;
+  const line = $<SVGPathElement>('[data-trazo]', scene)!;
+  const box = JSON.parse(svg.dataset.box!);
+  const dust = polvo($<HTMLCanvasElement>('[data-polvo]', scene)!, box);
+  const length = line.getTotalLength();
+
+  let p = 0;
+  let lastTrace = 0;
+  let visible = false;
+  let raf = 0;
+  let lastTime = 0;
+
+  onProgress(scene, (value) => {
+    p = value;
+    if (visible && !raf && !reducedMotion) raf = requestAnimationFrame(frame);
+  });
+
+  new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting;
+    if (visible && !raf && !reducedMotion) raf = requestAnimationFrame(frame);
+  }).observe(scene);
+
+  function frame(now: number) {
+    const dt = Math.min(0.05, lastTime ? (now - lastTime) / 1000 : 0);
+    lastTime = now;
+
+    // While the line draws, sparks fly off its tip
+    const trace = segment(p, 0.18, 0.52);
+    if (trace > 0 && trace < 1 && trace !== lastTrace) {
+      const from = Math.min(lastTrace, trace);
+      const to = Math.max(lastTrace, trace);
+      for (let t = from; t <= to; t += 0.004) {
+        const pt = line.getPointAtLength(t * length);
+        dust.emit(pt.x, pt.y, 2, 4);
+      }
+    }
+    lastTrace = trace;
+
+    // Once it is light, the spirit sheds dust all over, more when it lifts
+    const glow = segment(p, 0.5, 0.72);
+    if (glow > 0.2) {
+      const rate = 1 + Math.round(segment(p, 0.76, 1) * 3);
+      for (let i = 0; i < rate; i++) {
+        if (Math.random() < 0.6) {
+          const pt = line.getPointAtLength(Math.random() * length);
+          dust.emit(pt.x, pt.y - segment(p, 0.76, 1) * 40, 1, 10);
+        }
+      }
+    }
+
+    dust.step(dt);
+    if (visible && (glow > 0 || dust.alive)) raf = requestAnimationFrame(frame);
+    else {
+      raf = 0;
+      lastTime = 0;
+    }
+  }
+</script>
+
 <style>
+  .lema {
+    /* The story beats, all from the scene's progress */
+    --words: clamp(0, var(--p) / 0.44, 1);
+    --show: clamp(0, (var(--p) - 0.02) / 0.1, 1);
+    --trace: clamp(0, (var(--p) - 0.18) / 0.34, 1);
+    --fade: clamp(0, (var(--p) - 0.5) / 0.18, 1);
+    --glow: clamp(0, (var(--p) - 0.5) / 0.22, 1);
+    --lift: clamp(0, (var(--p) - 0.76) / 0.24, 1);
+  }
+
   .stage {
-    display: grid;
-    place-items: center;
-    padding: 0 var(--gutter);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: calc(80px + 4vh) var(--gutter) 24px;
   }
 
   .tagline {
@@ -50,9 +185,85 @@ const total = n;
 
   /* Each word turns on as the progress passes its place in the sentence */
   .word {
-    --on: clamp(0, calc((var(--p) * 1.35 - 0.1) * var(--n) - var(--i)), 1);
+    --on: clamp(0, calc((var(--words) * 1.1 - 0.05) * var(--n) - var(--i)), 1);
     opacity: calc(0.28 + 0.72 * var(--on));
     transition: opacity 700ms var(--ease);
+  }
+
+  .cruce {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    margin-top: 16px;
+    opacity: var(--show);
+  }
+  .cruce svg,
+  .cruce canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .cruce canvas {
+    pointer-events: none;
+  }
+
+  .figura {
+    transform: translateY(calc(var(--lift) * -28px));
+    transition: transform 400ms var(--ease);
+  }
+
+  .pintura {
+    opacity: calc(1 - var(--fade));
+  }
+
+  .tinta {
+    fill: none;
+    stroke: #1a1030;
+    stroke-width: 2;
+    stroke-linejoin: round;
+    opacity: calc(0.7 * (1 - var(--fade)));
+    filter: url(#trazo);
+  }
+
+  .trazo {
+    fill: none;
+    stroke: #ffe3a0;
+    stroke-width: 2.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: calc(1 - var(--trace));
+    /* Hidden until the line starts, so its round cap does not show as a dot */
+    opacity: min(1, calc(var(--trace) * 40));
+  }
+
+  .espiritu {
+    opacity: calc(var(--glow) * 0.92);
+  }
+
+  .halo {
+    opacity: calc(var(--glow) * 0.55);
+    animation: respira 3.2s ease-in-out infinite;
+    transform-origin: 1260px 520px;
+  }
+
+  /* The painted shading, multiplied over the gold: ears, legs and face stay readable */
+  .relieve {
+    mix-blend-mode: multiply;
+    opacity: calc(var(--glow) * 0.85);
+  }
+
+  .ojo {
+    fill: #7a3c08;
+    opacity: calc(var(--glow) * 0.5);
+  }
+
+  @keyframes respira {
+    50% {
+      transform: scale(1.04);
+    }
   }
 
   @media (min-width: 768px) {
@@ -64,5 +275,20 @@ const total = n;
     .tagline {
       font-size: var(--t-7xl);
     }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .halo {
+      animation: none;
+    }
+  }
+
+  /* Without JavaScript the Xolo simply shows as light */
+  html:not(.js) .lema {
+    --words: 1;
+    --show: 1;
+    --trace: 1;
+    --fade: 1;
+    --glow: 1;
   }
 </style>

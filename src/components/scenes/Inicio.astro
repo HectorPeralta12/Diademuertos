@@ -1,28 +1,21 @@
 ---
 /**
- * Opening: the Xolo keeps watch in a loop. As you scroll, the copy leaves and
+ * Opening: the Xolo keeps watch, its painting kept alive in code (stars,
+ * falling petals, candles, a blink). As you scroll, the copy leaves and
  * a pre-rendered camera move, scrubbed by the scroll, travels from the Xolo to
  * the full altar. Its last frame is the first view of the next scene.
  */
 
-// Share of the scene that holds on the loop before the camera starts moving
+// Share of the scene that holds on the painting before the camera starts moving
 const HOLD = 0.28;
 ---
 
 <section class="scene inicio" id="inicio" data-scene="inicio" data-theme="noche" data-chapter="ofrenda" style="--len: 380" data-hold={HOLD}>
   <div class="stage" style={`--hold: ${HOLD}`}>
-    <video
-      class="xolo"
-      src="/videos/xolo-hero.mp4"
-      poster="/images/xolo-hero.webp"
-      autoplay
-      muted
-      loop
-      playsinline
-      preload="auto"
-      aria-hidden="true"
-      data-xolo
-    ></video>
+    <div class="art" aria-hidden="true">
+      <img src="/images/xolo-hero.webp" alt="" width="1672" height="941" fetchpriority="high" decoding="async" />
+      <canvas data-ambience></canvas>
+    </div>
     <video class="move" muted playsinline preload="none" aria-hidden="true" data-move data-src="/videos/xolo-a-altar.mp4"></video>
     <div class="shade" aria-hidden="true"></div>
 
@@ -46,32 +39,35 @@ const HOLD = 0.28;
   import { $ } from '../../scripts/dom';
   import { onProgress, reducedMotion } from '../../scripts/scenes';
   import { scrub } from '../../scripts/scrub';
+  import { ambience } from '../../scripts/xolo-ambience';
 
   const scene = $('[data-scene="inicio"]')!;
   const hold = Number(scene.dataset.hold);
-  const loop = $<HTMLVideoElement>('[data-xolo]', scene)!;
+  const life = ambience($<HTMLCanvasElement>('[data-ambience]', scene)!, reducedMotion);
   const moveEl = $<HTMLVideoElement>('[data-move]', scene)!;
   let last = 0;
   const move = scrub(moveEl, moveEl.dataset.src!, () => update(last));
 
-  if (reducedMotion) {
-    loop.removeAttribute('autoplay');
-    loop.pause();
-  }
-
+  // Only animate while the painting is on screen and the camera has not taken over
+  let visible = true;
   let moving = false;
+  const sync = () => (visible && !moving ? life.play() : life.pause());
+  new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting;
+    sync();
+  }).observe($('.stage', scene)!);
+
   function update(p: number) {
     last = p;
     // Once the move lands, the altar scene underneath holds the same frame: hand over instantly
     scene.classList.toggle('is-done', p >= 0.999);
     const t = (p - hold) / (1 - hold);
-    // The camera clip takes over from the loop once it starts moving; both open on the same frame
+    // The camera clip takes over from the painting once it starts moving; both open on the same frame
     const on = t > 0 && move.ready;
     if (on !== moving) {
       moving = on;
       moveEl.classList.toggle('is-on', on);
-      if (on) loop.pause();
-      else if (!reducedMotion) loop.play().catch(() => {});
+      sync();
     }
     move.seek(t);
   }
@@ -93,19 +89,31 @@ const HOLD = 0.28;
 
   .stage {
     background: var(--noche);
+    container-type: size;
     /* Framing pans from the Xolo (right) to the centered altar of the next scene */
-    --from: 68%;
+    --from: 0.68;
     --t: clamp(0, (var(--p) - var(--hold)) / (1 - var(--hold)), 1);
-    --x: calc(var(--from) + (50% - var(--from)) * var(--t));
+    --xf: calc(var(--from) + (0.5 - var(--from)) * var(--t));
+    --x: calc(var(--xf) * 100%);
   }
 
-  .xolo {
+  /* The painting and its living layer, covering the stage like object-fit: cover */
+  .art {
+    --ratio: 1.7768;
+    --w: max(100cqw, 100cqh * var(--ratio));
+    position: absolute;
+    top: 50%;
+    left: calc((100cqw - var(--w)) * var(--xf));
+    width: var(--w);
+    height: calc(var(--w) / var(--ratio));
+    transform: translateY(-50%);
+  }
+  .art img,
+  .art canvas {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    object-position: var(--x) 50%;
   }
 
   .move {
@@ -116,7 +124,7 @@ const HOLD = 0.28;
     object-fit: cover;
     object-position: var(--x) 50%;
     opacity: 0;
-    /* The loop is paused wherever it was, not on the move's first frame: a short dissolve hides the cut */
+    /* The painting and the move open on the same frame; a short dissolve hides any mismatch */
     transition: opacity 320ms var(--ease);
   }
   .move.is-on {
@@ -192,7 +200,7 @@ const HOLD = 0.28;
   }
   @media (max-width: 767px) {
     .stage {
-      --from: 74%;
+      --from: 0.74;
     }
     .lead br {
       display: none;

@@ -6,8 +6,11 @@
  * Frames share one canvas, aligned on the paws and on the body's center of
  * mass, so swapping them reads as steps and not as jumps.
  *
+ * Also the Xolo sitting with its back to us, for when it reaches the altar,
+ * at the same scale as the walking frames.
+ *
  * Run: node scripts/xolo-guia.mjs
- * Out: public/images/guia/paso-1.webp … paso-3.webp
+ * Out: public/images/guia/paso-1.webp … paso-3.webp, sentado.webp
  */
 import { mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -23,6 +26,8 @@ const FRAMES = [
   { left: 960, width: 1240 },
   { left: 1960, width: 1260 },
 ].map((f) => ({ ...f, top: 1660, height: 1080 }));
+// First row, fourth dog: sitting, seen from behind
+const SEATED = { left: 2720, top: 100, width: 600, height: 1460 };
 
 // Final height of every frame, in pixels (shown at about half for sharp screens)
 const HEIGHT = 320;
@@ -34,8 +39,7 @@ function hsv(r, g, b) {
   return [max ? (max - min) / max : 0, max];
 }
 
-const cuts = [];
-for (const f of FRAMES) {
+async function cut(f) {
   const { data, info } = await sharp(SHEET).extract(f).removeAlpha().raw().toBuffer({ resolveWithObject: true });
   const W = info.width;
   const H = info.height;
@@ -60,8 +64,11 @@ for (const f of FRAMES) {
         y0 = Math.min(y0, y); y1 = Math.max(y1, y);
         cx += x; count++;
       }
-  cuts.push({ data, dog, W, H, box: { x0, y0, x1, y1 }, cx: cx / count });
+  return { data, dog, W, H, box: { x0, y0, x1, y1 }, cx: cx / count };
 }
+
+const cuts = [];
+for (const f of FRAMES) cuts.push(await cut(f));
 
 // One canvas for all: tallest dog sets the scale, paws on the bottom edge,
 // centers of mass on the same vertical line
@@ -74,7 +81,8 @@ const CH = HEIGHT + 8;
 
 await mkdir(OUT, { recursive: true });
 
-for (const [n, c] of cuts.entries()) {
+// The cut dog as golden light, scaled to the shared size
+async function spirit(c) {
   const { data, dog, W, box } = c;
   // Full resolution spirit, then scaled down once
   const bw = box.x1 - box.x0 + 1;
@@ -102,7 +110,12 @@ for (const [n, c] of cuts.entries()) {
     }
   const tw = Math.round(bw * scale);
   const th = Math.round(bh * scale);
-  const scaled = await sharp(out, { raw: { width: bw, height: bh, channels: 4 } }).resize(tw, th).png().toBuffer();
+  return { input: await sharp(out, { raw: { width: bw, height: bh, channels: 4 } }).resize(tw, th).png().toBuffer(), tw, th };
+}
+
+for (const [n, c] of cuts.entries()) {
+  const { box } = c;
+  const { input: scaled, th } = await spirit(c);
   const left = Math.round((leftReach - (c.cx - box.x0)) * scale) + 4;
   const top = CH - 4 - th;
   await sharp({ create: { width: CW, height: CH, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
@@ -111,6 +124,15 @@ for (const [n, c] of cuts.entries()) {
     .toFile(fileURLToPath(new URL(`paso-${n + 1}.webp`, OUT)));
 }
 console.log(`3 frames, ${CW} × ${CH}`);
+
+{
+  const { input, tw, th } = await spirit(await cut(SEATED));
+  await sharp({ create: { width: tw + 8, height: th + 8, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+    .composite([{ input, left: 4, top: 4 }])
+    .webp({ quality: 88, alphaQuality: 100 })
+    .toFile(fileURLToPath(new URL('sentado.webp', OUT)));
+  console.log(`sitting, ${tw + 8} × ${th + 8}`);
+}
 
 // ---------- helpers ----------
 

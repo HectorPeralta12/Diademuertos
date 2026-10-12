@@ -29,6 +29,8 @@ const FRAMES = ['/images/guia/paso-2.webp', '/images/guia/paso-1.webp', '/images
   const dust = polvo($<HTMLCanvasElement>('[data-guia-polvo]', guia)!);
   const from = $('[data-scene="lema"]')!;
   const to = $('[data-scene="cierre"]')!;
+  // On the marigold path the Xolo walks inside the scene, so the guide steps out
+  const camino = $('[data-scene="camino"]');
 
   // Walk cycle: stride, passing, other stride, passing; index 1 also stands still
   const CYCLE = [0, 1, 2, 1];
@@ -69,7 +71,14 @@ const FRAMES = ['/images/guia/paso-2.webp', '/images/guia/paso-1.webp', '/images
     const on = p > -0.02 && p < 1.02;
     const t = Math.min(1, Math.max(0, p));
     guia.style.setProperty('--viaje', String(t));
-    guia.style.setProperty('--ver', String(Math.min(1, Math.max(0, Math.min((p + 0.02) / 0.04, (1.02 - p) / 0.04)))));
+    const vh = window.innerHeight;
+    let away = 0;
+    if (camino) {
+      const c = camino.getBoundingClientRect();
+      away = Math.min(1, Math.max(0, Math.min((vh - c.top) / (vh * 0.5), c.bottom / (vh * 0.5))));
+    }
+    const ver = Math.min(1, Math.max(0, Math.min((p + 0.02) / 0.04, (1.02 - p) / 0.04))) * (1 - away);
+    guia.style.setProperty('--ver', String(ver));
 
     if (on && delta !== 0) {
       idle = 0;
@@ -92,7 +101,7 @@ const FRAMES = ['/images/guia/paso-2.webp', '/images/guia/paso-1.webp', '/images
     }
 
     // Dust from the paws while walking, a slow shimmer while waiting
-    if (on && !reducedMotion) {
+    if (on && ver > 0.05 && !reducedMotion) {
       const r = xolo.getBoundingClientRect();
       const g = guia.getBoundingClientRect();
       const walking = idle < 0.25;

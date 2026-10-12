@@ -5,7 +5,7 @@ import { marigold, EDGE } from '../../scripts/marigold';
  * The marigold path, from the door of the house to the altar, at night.
  *
  * A full illustration drawn in SVG (adobe house, tile roof, cantera door frame,
- * distant town, moon and stars, an altar with its marigold arch) with one light
+ * distant town and moon under the page's sky, an altar with its marigold arch) with one light
  * source per moment: the moon at first, then the warm light from the opening
  * door, then the candles. A canvas on top carries what moves: petals that fall,
  * flip and settle along the path with their shadows, marigold heads that bloom
@@ -44,11 +44,6 @@ const flower = (x: number, y: number, rad: number, tone: number, shape = Math.fl
 const PATH = 'M300 702 C 360 760 470 800 620 812 S 900 830 1030 790 S 1180 742 1300 748';
 
 const MOON = { x: 860, y: 150, r: 46 };
-const stars = Array.from({ length: 110 }, () => {
-  const x = r() * 1600;
-  const y = r() * 520;
-  return { x: f(x), y: f(y), s: f(0.5 + r() * 1.3), d: f(2 + r() * 4), o: f(r() * -6), far: Math.hypot(x - MOON.x, y - MOON.y) > 90 };
-}).filter((s) => s.far);
 
 // Far hills with the lights of a town
 const hillsFar = 'M0 600 C 160 560 300 590 420 570 S 700 520 880 556 S 1180 590 1340 548 S 1520 560 1600 556 V 720 H 0 Z';
@@ -230,12 +225,6 @@ const pebbles = Array.from({ length: 90 }, () => {
     <div class="world" data-world data-vb={JSON.stringify(VB)}>
       <svg class="art" viewBox={`${VB.x} ${VB.y} ${VB.w} ${VB.h}`} preserveAspectRatio="xMidYMid slice" aria-hidden="true">
         <defs>
-          <linearGradient id="cm-sky" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#07051a" />
-            <stop offset="0.55" stop-color="#160f38" />
-            <stop offset="0.8" stop-color="#2c1a4c" />
-            <stop offset="1" stop-color="#3d2254" />
-          </linearGradient>
           <radialGradient id="cm-moon" cx="0.38" cy="0.36" r="0.7">
             <stop offset="0" stop-color="#fffaf0" />
             <stop offset="0.7" stop-color="#ece3cf" />
@@ -246,14 +235,14 @@ const pebbles = Array.from({ length: 90 }, () => {
             <stop offset="1" stop-color="#cfd6ff" stop-opacity="0" />
           </radialGradient>
           <linearGradient id="cm-ground" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#2a1d33" />
-            <stop offset="0.35" stop-color="#1d1426" />
-            <stop offset="1" stop-color="#0d0915" />
+            <stop offset="0" stop-color="#231d4a" />
+            <stop offset="0.35" stop-color="#18143a" />
+            <stop offset="1" stop-color="#0c0a22" />
           </linearGradient>
           <linearGradient id="cm-adobe" x1="0" y1="0" x2="0.35" y2="1">
-            <stop offset="0" stop-color="#b8694a" />
-            <stop offset="0.5" stop-color="#93503a" />
-            <stop offset="1" stop-color="#5d3226" />
+            <stop offset="0" stop-color="#9a5e5a" />
+            <stop offset="0.5" stop-color="#734650" />
+            <stop offset="1" stop-color="#3f2840" />
           </linearGradient>
           <linearGradient id="cm-eave" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stop-color="#000" stop-opacity="0.55" />
@@ -377,11 +366,7 @@ const pebbles = Array.from({ length: 90 }, () => {
           </mask>
         </defs>
 
-        <!-- Sky, moon and stars -->
-        <rect width="1600" height="900" fill="url(#cm-sky)" />
-        <g class="stars">
-          {stars.map((s) => <circle cx={s.x} cy={s.y} r={s.s} style={`--d: ${s.d}s; --o: ${s.o}s`} />)}
-        </g>
+        <!-- The moon; the sky and its stars are the page's own (Layout) -->
         <circle cx={MOON.x} cy={MOON.y} r={MOON.r * 3.4} fill="url(#cm-moonhalo)" />
         <circle cx={MOON.x} cy={MOON.y} r={MOON.r} fill="url(#cm-moon)" />
         <g class="craters">
@@ -391,11 +376,11 @@ const pebbles = Array.from({ length: 90 }, () => {
         </g>
 
         <!-- Hills and the town far away -->
-        <path d={hillsFar} fill="#1e1440" />
+        <path d={hillsFar} fill="#262058" class="tinta" />
         <g class="town">
           {town.map((l) => <rect x={l.x} y={l.y} width={l.s} height={l.s} style={`--d: ${l.d}s; --o: ${l.o}s`} />)}
         </g>
-        <path d={hillsNear} fill="#170f30" />
+        <path d={hillsNear} fill="#1a1642" class="tinta" />
 
         <!-- Ground -->
         <rect y="690" width="1600" height="210" fill="url(#cm-ground)" />
@@ -405,7 +390,7 @@ const pebbles = Array.from({ length: 90 }, () => {
         </g>
 
         <!-- Agave by the house, for depth -->
-        <g class="agave">
+        <g class="agave trazo">
           <path d="M40 706 C 20 640 0 620 -10 600 C 20 630 40 650 52 700 Z" />
           <path d="M48 706 C 50 630 70 590 92 560 C 80 610 70 650 62 706 Z" />
           <path d="M60 706 C 100 650 130 640 160 630 C 120 660 96 680 74 708 Z" />
@@ -413,9 +398,9 @@ const pebbles = Array.from({ length: 90 }, () => {
         </g>
 
         <!-- The house -->
-        <g class="house">
+        <g class="house trazo">
           <ellipse cx="290" cy="704" rx="250" ry="10" fill="#000" opacity="0.4" />
-          <rect x="60" y="330" width="460" height="372" fill="url(#cm-adobe)" />
+          <rect x="60" y="330" width="460" height="372" fill="url(#cm-adobe)" class="tinta" />
           <g clip-path="url(#cm-wallclip)">
             <rect x="60" y="330" width="460" height="372" filter="url(#cm-grain)" opacity="0.5" style="mix-blend-mode: multiply" />
             <!-- Patches where the plaster fell off, showing the adobe bricks -->
@@ -436,7 +421,7 @@ const pebbles = Array.from({ length: 90 }, () => {
             </g>
           ))}
           <!-- Tile roof -->
-          <rect x="40" y="290" width="500" height="44" fill="url(#cm-tiles)" />
+          <rect x="40" y="290" width="500" height="44" fill="url(#cm-tiles)" class="tinta" />
           <rect x="40" y="286" width="500" height="8" rx="3" fill="#8a3a22" />
           <rect x="40" y="330" width="500" height="5" fill="#000" opacity="0.45" />
 
@@ -450,7 +435,7 @@ const pebbles = Array.from({ length: 90 }, () => {
 
           <!-- Window with iron bars; it lights up with the house -->
           <g class="window">
-            <rect x="372" y="446" width="104" height="96" rx="4" fill="#cdb796" />
+            <rect x="372" y="446" width="104" height="96" rx="4" fill="#cdb796" class="tinta" />
             <rect x="380" y="454" width="88" height="80" fill="#130d22" />
             <rect x="380" y="454" width="88" height="80" fill="url(#cm-inside)" class="lit-in" />
             {[396, 412, 428, 444, 460].map((x) => <rect x={x - 2} y="454" width="4" height="80" fill="#1a1412" />)}
@@ -464,7 +449,7 @@ const pebbles = Array.from({ length: 90 }, () => {
           </g>
 
           <!-- Doorway: cantera frame, warm interior, and the wooden leaf that swings open -->
-          <path d="M240 704 V 560 A 60 60 0 0 1 360 560 V 704 Z" fill="#c9b18e" />
+          <path d="M240 704 V 560 A 60 60 0 0 1 360 560 V 704 Z" fill="#c9b18e" class="tinta" />
           <path d="M240 704 V 560 A 60 60 0 0 1 360 560 V 704" fill="none" stroke="#e3d0ae" stroke-width="3" opacity="0.6" />
           <path d="M256 702 V 566 A 44 44 0 0 1 344 566 V 702 Z" fill="#120b10" />
           <path d="M256 702 V 566 A 44 44 0 0 1 344 566 V 702 Z" fill="url(#cm-inside)" class="lit-in" />
@@ -494,11 +479,13 @@ const pebbles = Array.from({ length: 90 }, () => {
 
         <!-- Low stone wall behind the path -->
         <g class="barda">
-          <rect x="556" y="640" width="538" height="68" fill="#2c2230" />
+          <g class="trazo">
+          <rect x="556" y="640" width="538" height="68" fill="#2c2230" class="tinta" />
           {wallStones.map((st) => <rect x={st.x} y={st.y} width={st.w} height={st.h} rx="4" fill={st.c} />)}
           <rect x="550" y="630" width="550" height="12" rx="3" fill="#7a6670" />
           <rect x="550" y="630" width="550" height="3" rx="1.5" fill="#a8949c" opacity="0.6" />
           <rect x="556" y="700" width="538" height="10" fill="#000" opacity="0.3" />
+          </g>
           {
             pots.map((x, k) => (
               <g>
@@ -555,7 +542,7 @@ const pebbles = Array.from({ length: 90 }, () => {
             tiers.map((t) => (
               <g>
                 <path d={`M${t.x} ${t.y} L ${t.x + t.w} ${t.y} L ${t.x + t.w - t.top} ${t.y - t.top} L ${t.x + t.top} ${t.y - t.top} Z`} fill="url(#cm-clothtop)" />
-                <rect x={t.x} y={t.y} width={t.w} height={t.h} fill="url(#cm-cloth)" />
+                <rect x={t.x} y={t.y} width={t.w} height={t.h} fill="url(#cm-cloth)" class="tinta" />
                 <rect x={t.x} y={t.y} width={t.w} height="10" fill="#f29a1c" />
                 <path
                   d={`M${t.x} ${t.y + 10} ${Array.from({ length: Math.round(t.w / 12) }, (_, k) => {
@@ -573,7 +560,7 @@ const pebbles = Array.from({ length: 90 }, () => {
           <!-- Top tier: the portrait -->
           <g class="portrait">
             <ellipse cx="1300" cy="478" rx="46" ry="3" fill="#000" opacity="0.35" />
-            <rect x="1258" y="376" width="84" height="102" rx="3" fill="#4a2a18" />
+            <rect x="1258" y="376" width="84" height="102" rx="3" fill="#4a2a18" class="tinta" />
             <rect x="1262.5" y="380.5" width="75" height="93" rx="1.5" fill="none" stroke="#c9a86a" stroke-width="1.2" opacity="0.75" />
             <rect x="1266" y="384" width="68" height="86" fill="url(#cm-sepia)" />
             <circle cx="1300" cy="413" r="13" fill="#7a5e40" />
@@ -707,6 +694,7 @@ const pebbles = Array.from({ length: 90 }, () => {
         }
       </svg>
       <canvas class="fx" data-fx aria-hidden="true"></canvas>
+      <canvas class="fx" data-polvo aria-hidden="true"></canvas>
     </div>
 
     <ol class="captions stack">
@@ -736,10 +724,12 @@ const pebbles = Array.from({ length: 90 }, () => {
   import { $ } from '../../scripts/dom';
   import { clamp, onProgress, onResize, reducedMotion } from '../../scripts/scenes';
   import { EDGE, LOOSE_PETALS, PETAL_CREASE, marigold } from '../../scripts/marigold';
+  import { polvo } from '../../scripts/polvo';
 
   const scene = $('[data-scene="camino"]')!;
   const world = $('[data-world]', scene)!;
   const canvas = $<HTMLCanvasElement>('[data-fx]', scene)!;
+  const dustCanvas = $<HTMLCanvasElement>('[data-polvo]', scene)!;
   const guide = $<SVGPathElement>('[data-path]', scene)!;
   const ctx = canvas.getContext('2d')!;
 
@@ -842,6 +832,26 @@ const pebbles = Array.from({ length: 90 }, () => {
     ctx.globalAlpha = 1;
   }
 
+  // The Xolo of light walks the path ahead of the soul, guiding it: the same
+  // three poses as the guide (scripts/xolo-guia.mjs), facing the altar
+  const POSES = ['/images/guia/paso-2.webp', '/images/guia/paso-1.webp', '/images/guia/paso-3.webp'].map((src) => {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = src;
+    return img;
+  });
+  // At the altar it sits down with its back to us, looking at the offering
+  const SEATED = new Image();
+  SEATED.decoding = 'async';
+  SEATED.src = '/images/guia/sentado.webp';
+  const CYCLE = [0, 1, 2, 1];
+  const STRIDE = 26; // field units walked per pose
+  const XOLO_AHEAD = 0.045; // how far ahead of the soul it walks
+  const XOLO_H = 80; // height of the dog in field units, before depth
+  const XOLO_STOP = 0.88; // where it sits: in front of the altar, nearer to us
+  let lastStep = -1;
+  let lastTime = 0;
+
   // Copal smoke: a soft sprite, reused by every particle
   const puff = document.createElement('canvas');
   puff.width = puff.height = 64;
@@ -857,6 +867,7 @@ const pebbles = Array.from({ length: 90 }, () => {
 
   // The canvas maps the same view box as the SVG
   const VB = JSON.parse(world.dataset.vb ?? '{"x":0,"y":0,"w":1600,"h":900}');
+  const dust = polvo(dustCanvas, VB);
   let scale = 1;
   let dpr = 1;
   function measure() {
@@ -949,6 +960,67 @@ const pebbles = Array.from({ length: 90 }, () => {
       ctx.globalCompositeOperation = 'source-over';
     }
 
+    // The Xolo, a few steps ahead of the soul; it stays at the altar on all fours
+    const xoloOn = clamp((p - OPEN * 0.6) / 0.05);
+    if (xoloOn > 0) {
+      const u = Math.min(XOLO_STOP, front(p) + XOLO_AHEAD);
+      const at = pointAt(u);
+      const ahead = pointAt(Math.min(1, u + 0.01));
+      const k = depth(at.y);
+      const arrived = u >= XOLO_STOP;
+      const stepIndex = Math.floor((u * length) / STRIDE);
+      const pose = reducedMotion || arrived ? 1 : CYCLE[stepIndex % CYCLE.length];
+      const img = POSES[pose];
+      // Walking frames are 328 px tall for XOLO_H; the seated one shares their scale
+      const sit = clamp((p - ARRIVE - 0.02) / 0.04);
+      if (sit > 0 && SEATED.complete && SEATED.naturalWidth) {
+        const h = XOLO_H * k * (SEATED.naturalHeight / 328);
+        const w = (h * SEATED.naturalWidth) / SEATED.naturalHeight;
+        // A soft halo so the light reads against the altar cloth
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        const halo = ctx.createRadialGradient(at.x, at.y - h * 0.45, 0, at.x, at.y - h * 0.45, h * 0.8);
+        halo.addColorStop(0, `rgba(255, 200, 110, ${0.35 * sit})`);
+        halo.addColorStop(1, 'rgba(255, 170, 70, 0)');
+        ctx.fillStyle = halo;
+        ctx.beginPath();
+        ctx.arc(at.x, at.y - h * 0.45, h * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        ctx.save();
+        ctx.globalAlpha = xoloOn * sit;
+        ctx.shadowColor = 'rgba(255, 196, 90, 0.8)';
+        ctx.shadowBlur = 18 * k * scale * dpr;
+        ctx.drawImage(SEATED, at.x - w / 2, at.y + 4 * k - h, w, h);
+        ctx.restore();
+      }
+      if (sit < 1 && img.complete && img.naturalWidth) {
+        const h = XOLO_H * k;
+        const w = (h * img.naturalWidth) / img.naturalHeight;
+        // Walking uphill toward the altar, it leans a little with the ground
+        const slope = Math.atan2(ahead.y - at.y, ahead.x - at.x) * 0.35;
+        ctx.save();
+        ctx.globalAlpha = xoloOn * (1 - sit);
+        ctx.translate(at.x, at.y + 4 * k);
+        ctx.rotate(slope);
+        ctx.scale(-1, 1);
+        ctx.shadowColor = 'rgba(255, 196, 90, 0.8)';
+        ctx.shadowBlur = 18 * k * scale * dpr;
+        ctx.drawImage(img, -w / 2, -h, w, h);
+        ctx.restore();
+      }
+      // Gold dust from the paws at every new step
+      if (!reducedMotion && stepIndex !== lastStep && !arrived) {
+        dust.emit(at.x, at.y, 6, 14 * k);
+        lastStep = stepIndex;
+      } else if (!reducedMotion && Math.random() < 0.25) {
+        dust.emit(at.x + (Math.random() - 0.5) * 30 * k, at.y - Math.random() * XOLO_H * k, 1, 4);
+      }
+    }
+    const dt = lastTime ? Math.min(0.05, (now - lastTime) / 1000) : 0;
+    lastTime = now;
+    dust.step(dt);
+
     // Copal smoke rises once the altar is lit
     const smokeOn = clamp((p - ARRIVE) / 0.06);
     if (smokeOn > 0) {
@@ -998,7 +1070,6 @@ const pebbles = Array.from({ length: 90 }, () => {
     --pan: 0;
   }
   .stage {
-    background: #07051a;
     --open: clamp(0, (var(--p) - 0.02) / 0.08, 1);
   }
 
@@ -1029,10 +1100,6 @@ const pebbles = Array.from({ length: 90 }, () => {
   }
 
   /* Night life */
-  .stars circle {
-    fill: #fff;
-    animation: twinkle var(--d) ease-in-out var(--o) infinite alternate;
-  }
   .town rect {
     fill: #ffcf7a;
     animation: twinkle var(--d) ease-in-out var(--o) infinite alternate;
@@ -1042,13 +1109,24 @@ const pebbles = Array.from({ length: 90 }, () => {
     to { opacity: 1; }
   }
 
+  /* Storybook ink: a fine dark line around the silhouettes, and hand drawn edges */
+  .tinta {
+    stroke: #0b0818;
+    stroke-width: 2;
+    stroke-linejoin: round;
+    paint-order: stroke;
+  }
+  .trazo {
+    filter: url(#trazo);
+  }
+
   .pebbles ellipse {
     fill: #05030c;
   }
   .agave path {
-    fill: #1d3a2c;
-    stroke: #2c5640;
-    stroke-width: 1;
+    fill: #141238;
+    stroke: #05040f;
+    stroke-width: 1.4;
   }
   .bricks path {
     fill: #6e3524;
@@ -1179,7 +1257,6 @@ const pebbles = Array.from({ length: 90 }, () => {
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .stars circle,
     .town rect,
     .flag,
     .flame,

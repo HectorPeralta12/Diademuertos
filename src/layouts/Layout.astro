@@ -139,6 +139,37 @@ const chapters = [
         queue();
       });
       pintura.addEventListener('load', queue);
+
+      // Painted scenes melt into the sky at the edges they share with it, while they
+      // slide in or out; once in place they show whole
+      const funden = Array.from(document.querySelectorAll<HTMLElement>('[data-funde]')).map((el) => ({
+        stage: el.querySelector<HTMLElement>('.stage')!,
+        el,
+        top: el.dataset.funde!.includes('arriba'),
+        bottom: el.dataset.funde!.includes('abajo'),
+      }));
+      let fundeQueued = false;
+      const funde = () => {
+        fundeQueued = false;
+        const vh = window.innerHeight;
+        for (const f of funden) {
+          const r = f.el.getBoundingClientRect();
+          if (r.bottom < 0 || r.top > vh) continue;
+          const a = f.top ? Math.min(1, Math.max(0, r.top / vh)) : 0;
+          const b = f.bottom ? Math.min(1, Math.max(0, (vh - r.bottom) / vh)) : 0;
+          f.stage.style.setProperty('--funde-a', a.toFixed(3));
+          f.stage.style.setProperty('--funde-b', b.toFixed(3));
+        }
+      };
+      const queueFunde = () => {
+        if (!fundeQueued) {
+          fundeQueued = true;
+          requestAnimationFrame(funde);
+        }
+      };
+      funde();
+      window.addEventListener('scroll', queueFunde, { passive: true });
+      window.addEventListener('resize', queueFunde);
     </script>
 
   </body>
@@ -341,6 +372,26 @@ const chapters = [
     /* The painting has its own stars: these only add the twinkle */
     opacity: calc(var(--estrellas) * 0.6);
     transition: opacity 900ms var(--ease);
+  }
+
+  /* A painted scene's edge fades into the sky while it slides in or out (see the script) */
+  [data-funde] .stage {
+    --funde-a: 0;
+    --funde-b: 0;
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      #000 calc(var(--funde-a) * 45% + 0.01%),
+      #000 calc(100% - var(--funde-b) * 45% - 0.01%),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      #000 calc(var(--funde-a) * 45% + 0.01%),
+      #000 calc(100% - var(--funde-b) * 45% - 0.01%),
+      transparent 100%
+    );
   }
 
   /* Paper grain on top of everything */

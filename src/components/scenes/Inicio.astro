@@ -88,12 +88,12 @@ const ALTAR_TOP = { x: 0.548, y: 0.24 };
     // Up into the sky, following the Xolo's gaze
     const up = smooth(clamp(t / 0.5));
     stage.style.setProperty('--zoom', (1 + 1.6 * up * up).toFixed(4));
-    // A gust of cempasúchil blows in; under a warm light the paintings change places,
-    // then the flowers open and shed their petals over the altar
-    const glow = Math.max(0, 1 - Math.abs(t - 0.52) / 0.12);
-    flores.draw(clamp((t - 0.22) / 0.32), clamp((t - 0.58) / 0.34), glow);
-    stage.style.setProperty('--art', (1 - clamp((t - 0.44) / 0.14)).toFixed(3));
-    stage.style.setProperty('--altar', clamp((t - 0.44) / 0.14).toFixed(3));
+    // A gust of cempasúchil blows through; the night closes in for a moment while the
+    // paintings change places, then the flowers open and shed their petals over the altar
+    const dark = Math.max(0, 1 - Math.abs(t - 0.5) / 0.1);
+    flores.draw(clamp((t - 0.3) / 0.2), clamp((t - 0.52) / 0.26), dark);
+    stage.style.setProperty('--art', (1 - clamp((t - 0.46) / 0.08)).toFixed(3));
+    stage.style.setProperty('--altar', clamp((t - 0.46) / 0.08).toFixed(3));
     // Down onto the whole altar while the flowers open
     const down = smooth(clamp((t - 0.46) / 0.54));
     stage.style.setProperty('--zoom-altar', (1 + 1.8 * (1 - down) * (1 - down)).toFixed(4));

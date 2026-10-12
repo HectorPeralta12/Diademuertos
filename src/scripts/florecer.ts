@@ -6,7 +6,7 @@
  *
  *  bloom 0 → 1: the gust blows in; flowers drift to their places, petals stream across
  *  open  0 → 1: from the center outward, each flower lets go of its petals and fades
- *  glow  0 → 1: a warm light that hides the hand over between two paintings
+ *  dark  0 → 1: the night closes in for a moment to hide the hand over between two paintings
  *
  * The flowers and petals are the painted ones cut from the cempasúchil sheet
  * (scripts/cempasuchil-piezas.mjs); the code-drawn heads stand in until they load.
@@ -119,7 +119,7 @@ export function florecer(canvas: HTMLCanvasElement) {
     heads = [];
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        if (rand() < 0.2) continue;
+        if (rand() < 0.4) continue;
         const hx = ((c + 0.2 + rand() * 0.6) / cols) * w;
         const hy = ((r + 0.2 + rand() * 0.6) / rows) * h;
         heads.push({
@@ -156,17 +156,17 @@ export function florecer(canvas: HTMLCanvasElement) {
       }
     });
     // The swirl of petals the wind carries across the screen
-    gust = Array.from({ length: w > h ? 90 : 55 }, () => ({
+    gust = Array.from({ length: w > h ? 150 : 90 }, () => ({
       y: rand() * h,
       amp: base * (0.04 + rand() * 0.12),
       freq: 1 + rand() * 2.5,
-      speed: 0.8 + rand() * 0.7,
-      size: base * (0.012 + rand() * 0.018),
+      speed: 1.3 + rand() * 0.9,
+      size: base * (0.012 + rand() * 0.02),
       spin: (rand() - 0.5) * 10,
       painted: Math.floor(rand() * PAINTED_PETALS.length),
       shape: Math.floor(rand() * petalPaths.length),
       tone: PETAL_TONES[Math.floor(rand() * PETAL_TONES.length)],
-      delay: rand() * 0.6,
+      delay: rand() * 0.5,
     }));
   }
 
@@ -188,19 +188,19 @@ export function florecer(canvas: HTMLCanvasElement) {
     ctx.restore();
   }
 
-  function draw(bloom: number, open: number, glow = 0) {
+  function draw(bloom: number, open: number, dark = 0) {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if ((bloom <= 0 || open >= 1) && glow <= 0) return;
+    if ((bloom <= 0 || open >= 1) && dark <= 0) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const reach = Math.hypot(w, h) * 0.6;
 
-    // A warm light while one painting gives way to the other
-    if (glow > 0) {
+    // The night closes in for a moment while one painting gives way to the other,
+    // darker at the edges, so the flowers and petals glow against it
+    if (dark > 0) {
       const g = ctx.createRadialGradient(w / 2, h * 0.45, 0, w / 2, h * 0.45, Math.hypot(w, h) * 0.6);
-      g.addColorStop(0, `rgba(255, 236, 200, ${0.75 * glow})`);
-      g.addColorStop(0.45, `rgba(255, 196, 120, ${0.35 * glow})`);
-      g.addColorStop(1, 'rgba(255, 170, 90, 0)');
+      g.addColorStop(0, `rgba(16, 13, 52, ${0.72 * dark})`);
+      g.addColorStop(1, `rgba(8, 6, 28, ${0.92 * dark})`);
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, w, h);
     }
@@ -208,13 +208,13 @@ export function florecer(canvas: HTMLCanvasElement) {
 
     // The swirl: petals stream across on the wind, and blow off the screen as the flowers open
     for (const gp of gust) {
-      const k = clamp((bloom - gp.delay * 0.5) / 0.7) + open * 0.8 * gp.speed;
+      const k = clamp((bloom - gp.delay * 0.5) / 0.6) + open * 1.2 * gp.speed;
       if (k <= 0) continue;
       const x = -40 + k * gp.speed * (w + 80);
       if (x > w + 40) continue;
       const y = gp.y + Math.sin(k * gp.freq * Math.PI * 2) * gp.amp - k * h * 0.08;
       const flip = 0.4 + 0.6 * Math.abs(Math.cos(k * gp.freq * 5));
-      petal(x, y, gp.size, gp.spin * k, flip, gp.painted, gp.shape, gp.tone, Math.min(1, k * 4) * (1 - open));
+      petal(x, y, gp.size, gp.spin * k, flip, gp.painted, gp.shape, gp.tone, Math.min(1, k * 4));
     }
 
     // Flowers: each rides the wind in on its own beat, and opens from the center outward

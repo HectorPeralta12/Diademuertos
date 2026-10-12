@@ -1,0 +1,135 @@
+---
+/**
+ * Closing: back to the Xolo under the stars, a farewell and the sources.
+ */
+
+const sources = [
+  { label: 'INAH, «Ofrendas para los muertos»', href: 'https://www.inah.gob.mx/index.php/foto-del-dia/ofrendas-para-los-muertos' },
+  { label: 'INAH, «El origen del Día de Muertos» (2023)', href: 'https://www.inah.gob.mx/especiales-inah/articulos/el-origen-del-dia-de-muertos' },
+  { label: 'UNESCO, «Las fiestas indígenas dedicadas a los muertos»', href: 'https://ich.unesco.org/es/RL/las-fiestas-indigenas-dedicadas-a-los-muertos-00054' },
+  { label: 'Secretaría de Cultura, el culto a los muertos', href: 'https://www.cultura.gob.mx/noticias/patrimonio-cultural-arquitectura-y-turismo/16767-el-culto-a-los-muertos-costumbre-que-se-remonta-a-la-epoca-prehispanica.html' },
+];
+---
+
+<section class="scene cierre" data-scene="cierre" data-theme="noche" data-chapter="preguntas" style="--len: 200">
+  <div class="stage">
+    <img class="sky" src="/images/xolo-hero.webp" alt="Un xoloitzcuintle sentado junto a velas y cempasúchil, frente a una ciudad al anochecer" loading="lazy" decoding="async" />
+    <div class="shade" aria-hidden="true"></div>
+
+    <div class="farewell">
+      <h2>Hasta el próximo<br />noviembre.</h2>
+      <div class="actions">
+        <a class="btn btn--primary" href="#ofrenda">
+          Recorrer la ofrenda otra vez
+          <svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M205.66,117.66a8,8,0,0,1-11.32,0L136,59.31V216a8,8,0,0,1-16,0V59.31L61.66,117.66a8,8,0,0,1-11.32-11.32l72-72a8,8,0,0,1,11.32,0l72,72A8,8,0,0,1,205.66,117.66Z" /></svg>
+        </a>
+      </div>
+    </div>
+
+    <footer class="foot">
+      <div>
+        <p class="mono label">Fuentes</p>
+        <ul>
+          {
+            sources.map((s) => (
+              <li>
+                <a href={s.href} target="_blank" rel="noopener">{s.label}</a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+      <p class="mono credit">Ilustraciones y video creados con IA para este proyecto · Fotos de Wikimedia Commons, con su autor y licencia en cada elemento · 2026</p>
+    </footer>
+  </div>
+</section>
+
+<style>
+  .sky {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 68% 50%;
+    transform: scale(calc(1.12 - var(--p) * 0.12));
+  }
+
+  .shade {
+    position: absolute;
+    inset: 0;
+    background: var(--noche);
+    opacity: 0.55;
+  }
+
+  .farewell {
+    position: absolute;
+    left: var(--gutter);
+    top: 50%;
+    transform: translateY(calc(-50% + (1 - clamp(0, var(--p) * 3, 1)) * 48px));
+    opacity: clamp(0, calc(var(--p) * 3), 1);
+    max-width: 680px;
+  }
+
+  h2 {
+    font-size: var(--t-7xl);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    background: linear-gradient(90deg, #ffffff, #9b9b9b);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .actions {
+    margin-top: 32px;
+  }
+
+  .foot {
+    position: absolute;
+    left: var(--gutter);
+    right: var(--gutter);
+    bottom: calc(24px + var(--chrome));
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: end;
+    gap: 24px;
+  }
+  .label {
+    color: var(--cempasuchil);
+  }
+  .foot ul {
+    margin-top: 8px;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 4px;
+    font-size: var(--t-sm);
+    line-height: 20px;
+  }
+  .foot a {
+    text-decoration-color: color-mix(in srgb, var(--fg) 40%, transparent);
+    transition: text-decoration-color 400ms var(--ease);
+  }
+  .foot a:hover {
+    text-decoration-color: currentColor;
+  }
+  .credit {
+    color: var(--fg-dim);
+  }
+
+  @media (min-width: 1280px) {
+    h2 {
+      font-size: var(--t-8xl);
+    }
+  }
+  @media (max-width: 767px) {
+    h2 {
+      font-size: var(--t-5xl);
+    }
+    .farewell {
+      top: 32%;
+    }
+  }
+</style>

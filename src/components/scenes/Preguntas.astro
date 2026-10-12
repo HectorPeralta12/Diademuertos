@@ -1,0 +1,237 @@
+---
+/**
+ * Questions people ask about the altar, answered from the same sources.
+ * A plain reading section: no sticky stage, the answers open in place.
+ */
+
+const faqs = [
+  {
+    q: '¿Cuándo se pone la ofrenda?',
+    a: 'Unos días antes del 1 de noviembre, para que esté lista cuando lleguen las ánimas. Así lo describe el INAH.',
+  },
+  {
+    q: '¿Qué no puede faltar en una ofrenda?',
+    a: 'Según el INAH, la mayoría comparte retratos, veladoras, comida y agua, flores de cempasúchil, incienso o copal, papel picado, calaveritas de azúcar y pan de muerto.',
+  },
+  {
+    q: '¿Hay una sola forma correcta de ponerla?',
+    a: 'No. Cada región tiene sus variantes, aunque casi todas comparten esos elementos. Lo importante es que la ofrenda hable de quien recuerdas.',
+  },
+  {
+    q: '¿Puedo poner cosas que le gustaban a la persona?',
+    a: 'Sí. Se suelen poner objetos que le gustaban o que la representaban. Para los niños, sus juguetes favoritos.',
+  },
+  {
+    q: '¿Por qué se sirve comida y agua?',
+    a: 'Para saciar el hambre y la sed que traen las ánimas después de su largo recorrido.',
+  },
+  {
+    q: '¿El Día de Muertos es de origen prehispánico?',
+    a: 'Es un debate. La UNESCO lo describe como una fusión de ritos prehispánicos con fiestas católicas llegadas en el siglo XVI. El arqueólogo Víctor Joel Santos Ramírez, del INAH, sostiene que sus fechas vienen del calendario católico y que las veintenas mexicas dedicadas a los muertos no le dieron origen.',
+  },
+  {
+    q: '¿Es patrimonio de la humanidad?',
+    a: 'Sí. La UNESCO proclamó «Las fiestas indígenas dedicadas a los muertos» en 2003 y las inscribió en la Lista Representativa del Patrimonio Cultural Inmaterial en 2008.',
+  },
+  {
+    q: '¿Qué días se celebra?',
+    a: 'Las fechas centrales son el 1 de noviembre, Todos los Santos, y el 2 de noviembre, Fieles Difuntos. La UNESCO señala que las fiestas ocurren entre finales de octubre y principios de noviembre.',
+  },
+];
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+};
+---
+
+<section class="flow preguntas" id="preguntas" data-scene="preguntas" data-theme="noche" data-chapter="preguntas">
+  <div class="inner">
+    <header>
+      <p class="mono kicker">Preguntas</p>
+      <h2>Lo que suele preguntarse sobre la ofrenda</h2>
+    </header>
+
+    <div class="list">
+      {
+        faqs.map((f) => (
+          <details>
+            <summary>
+              <span>{f.q}</span>
+              <svg viewBox="0 0 256 256" aria-hidden="true">
+                <path fill="currentColor" d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z" />
+              </svg>
+            </summary>
+            <p>{f.a}</p>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+</section>
+
+<script>
+  import { $$ } from '../../scripts/dom';
+
+  // Rows fade up as they enter the viewport
+  const rows = $$('.preguntas header, .preguntas details');
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        entry.target.classList.add('is-in');
+        io.unobserve(entry.target);
+      }
+    },
+    { rootMargin: '0px 0px -10% 0px' },
+  );
+  rows.forEach((row, i) => {
+    (row as HTMLElement).style.transitionDelay = `${Math.min(i, 6) * 60}ms`;
+    io.observe(row);
+  });
+</script>
+
+<style>
+  .preguntas {
+    position: relative;
+    padding: 96px var(--gutter);
+  }
+
+  .inner {
+    display: grid;
+    gap: 48px;
+    max-width: 1120px;
+    margin: 0 auto;
+  }
+
+  .kicker {
+    color: var(--accent);
+  }
+
+  h2 {
+    margin-top: 12px;
+    max-width: 680px;
+    font-size: var(--t-5xl);
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+
+  .list {
+    display: grid;
+  }
+
+  details {
+    border-radius: 16px;
+    transition: background-color 500ms var(--ease);
+  }
+  details:hover {
+    background: color-mix(in srgb, var(--fg) 4%, transparent);
+  }
+
+  summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    padding: 24px 16px;
+    font-size: var(--t-2xl);
+    line-height: 32px;
+    font-weight: 300;
+    cursor: pointer;
+    list-style: none;
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--fg) 14%, transparent);
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  summary svg {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    color: var(--accent);
+    transition: transform 600ms var(--ease);
+  }
+  details[open] summary svg {
+    transform: rotate(45deg);
+  }
+  summary:active {
+    transform: translateY(1px);
+  }
+
+  details p {
+    max-width: 720px;
+    padding: 16px 16px 24px;
+    font-size: var(--t-lg);
+    line-height: 28px;
+    color: color-mix(in srgb, var(--fg) 80%, transparent);
+  }
+
+  /* Opening animates its height where the browser supports it */
+  @supports (interpolate-size: allow-keywords) {
+    details {
+      interpolate-size: allow-keywords;
+    }
+    details::details-content {
+      block-size: 0;
+      overflow: hidden;
+      transition:
+        block-size 700ms var(--ease),
+        content-visibility 700ms allow-discrete;
+    }
+    details[open]::details-content {
+      block-size: auto;
+    }
+  }
+
+  /* Scroll reveal */
+  .js .preguntas header,
+  .js .preguntas details {
+    opacity: 0;
+    filter: blur(12px);
+    transform: translateY(64px);
+    transition:
+      opacity 900ms var(--ease),
+      filter 900ms var(--ease),
+      transform 900ms var(--ease),
+      background-color 500ms var(--ease);
+  }
+  .js .preguntas .is-in {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+
+  @media (min-width: 900px) {
+    .inner {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      align-items: start;
+    }
+    header {
+      position: sticky;
+      top: 96px;
+    }
+  }
+  @media (max-width: 767px) {
+    h2 {
+      font-size: var(--t-4xl);
+      line-height: 40px;
+    }
+    summary {
+      font-size: var(--t-xl);
+      line-height: 28px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .js .preguntas header,
+    .js .preguntas details {
+      transform: none;
+      filter: none;
+    }
+  }
+</style>

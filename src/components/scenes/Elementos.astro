@@ -1,0 +1,238 @@
+---
+/**
+ * The elements of the altar, as realistic AI-generated images that drop onto a sheet of
+ * amate paper one by one. Each lands with its meaning, as INAH describes it.
+ * Generated originals are stored in assets/elementos-ia, optimized to 4:5 WebP.
+ */
+
+const elements = [
+  {
+    img: 'retratos', name: 'Retratos', text: 'Dicen a quién se honra en la ofrenda.', x: 30, y: 2, r: -4,
+  },
+  {
+    img: 'veladoras', name: 'Veladoras', text: 'Guían a las ánimas hacia la ofrenda.', x: 64, y: 6, r: 5,
+  },
+  {
+    img: 'pan-de-muerto', name: 'Comida y agua', text: 'Sacian el hambre y la sed que traen las ánimas después de su largo recorrido.', x: 4, y: 30, r: 3,
+  },
+  {
+    img: 'cempasuchil', name: 'Cempasúchil', text: 'Sus flores marcan el camino desde la entrada de la casa hasta el altar.', x: 40, y: 34, r: -6,
+  },
+  {
+    img: 'copal', name: 'Incienso y copal', text: 'Aromatizan el espacio y alejan a los malos espíritus.', x: 70, y: 40, r: 4,
+  },
+  {
+    img: 'papel-picado', name: 'Papel picado', text: 'Aporta color a la ofrenda y representa el viento.', x: 16, y: 58, r: -3,
+  },
+  {
+    img: 'calaverita', name: 'Calaveritas y pan de muerto', text: 'Aparecen en casi cualquier ofrenda, sin importar la región.', x: 52, y: 62, r: 6,
+  },
+];
+
+const INTRO = 0.1;
+const STEP = (1 - INTRO) / elements.length;
+const at = elements.map((_, i) => INTRO + i * STEP);
+const beat = (i: number) =>
+  i === elements.length - 1 ? at[i].toFixed(3) : `${at[i].toFixed(3)} ${at[i + 1].toFixed(3)}`;
+---
+
+<section
+  class="scene elementos"
+  id="elementos"
+  data-scene="elementos"
+  data-theme="amate"
+  data-chapter="elementos"
+  data-at={JSON.stringify(at)}
+  style="--len: 900"
+>
+  <div class="stage">
+    <div class="collage" aria-hidden="true">
+      {
+        elements.map((e) => (
+          <figure class="print" style={`--x: ${e.x}%; --y: ${e.y}%; --r: ${e.r}deg`} data-print>
+            <img src={`/images/elementos-ia/${e.img}.webp`} srcset={`/images/elementos-ia/${e.img}-360.webp 360w, /images/elementos-ia/${e.img}.webp 720w`} sizes="(max-width: 700px) 30vw, 240px" alt="" loading="lazy" decoding="async" width="720" height="900" />
+          </figure>
+        ))
+      }
+    </div>
+
+    <ol class="captions stack">
+      <li class="beat intro" data-beat={`0 ${INTRO.toFixed(3)}`}>
+        <p class="mono">Elementos de la ofrenda</p>
+        <h2>Siete cosas que comparten casi todas las ofrendas</h2>
+        <p class="text">Hay variaciones en cada región, pero según el INAH estos elementos aparecen en la mayoría de los altares.</p>
+      </li>
+      {
+        elements.map((e, i) => (
+          <li class="beat" data-beat={beat(i)}>
+            <p class="mono count">{String(i + 1).padStart(2, '0')} / {String(elements.length).padStart(2, '0')}</p>
+            <h2>{e.name}</h2>
+            <p class="text">{e.text}</p>
+            <p class="mono credit">
+              Imagen generada con IA.
+            </p>
+            {i === elements.length - 1 && <p class="mono source">Fuente: INAH, «Ofrendas para los muertos»</p>}
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>
+
+<script>
+  import { $, $$ } from '../../scripts/dom';
+  import { clamp, ease, onProgress, reducedMotion } from '../../scripts/scenes';
+
+  const scene = $('[data-scene="elementos"]')!;
+  const at: number[] = JSON.parse(scene.dataset.at ?? '[]');
+  const prints = $$('[data-print]', scene).map((el) => ({ el, state: '' }));
+  const STEP = at.length > 1 ? at[1] - at[0] : 0.1;
+
+  onProgress(scene, (p) => {
+    prints.forEach((print, i) => {
+      // Each print falls during the first third of its step and settles in place
+      const t = reducedMotion ? (p >= at[i] - 0.02 ? 1 : 0) : ease(clamp((p - at[i] + 0.03) / (STEP * 0.45)));
+      const current = p >= at[i] && (i === prints.length - 1 || p < at[i + 1]);
+      const fall = (1 - t) * 110;
+      const spin = (1 - t) * (i % 2 ? 24 : -24);
+      const state = `${t.toFixed(3)}|${current}`;
+      if (state === print.state) return;
+      print.state = state;
+      print.el.style.transform = `translateY(${fall.toFixed(2)}vh) rotate(calc(var(--r) + ${spin.toFixed(2)}deg)) scale(${current ? 1.06 : 1})`;
+      print.el.style.opacity = String(t > 0 ? 1 : 0);
+      print.el.classList.toggle('is-current', current);
+    });
+  });
+</script>
+
+<style>
+  .stage {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    align-items: center;
+    gap: 48px;
+    padding: 96px var(--gutter) calc(64px + var(--chrome));
+  }
+
+  .captions {
+    grid-column: 1;
+    grid-row: 1;
+    list-style: none;
+    padding: 0;
+    max-width: 440px;
+  }
+
+  .captions .mono {
+    color: var(--accent);
+  }
+
+  h2 {
+    margin-top: 12px;
+    font-size: var(--t-5xl);
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+
+  .intro h2 {
+    font-size: var(--t-4xl);
+    line-height: 40px;
+  }
+
+  .text {
+    margin-top: 16px;
+    font-size: var(--t-xl);
+    line-height: 28px;
+    font-weight: 300;
+  }
+
+  .credit {
+    margin-top: 16px;
+    color: var(--fg-dim) !important;
+    text-transform: none;
+  }
+  .credit a {
+    pointer-events: auto;
+  }
+
+  .source {
+    margin-top: 8px;
+    color: var(--fg-dim) !important;
+  }
+
+  .collage {
+    grid-column: 2;
+    grid-row: 1;
+    position: relative;
+    height: min(80vh, 760px);
+  }
+
+  .print {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    width: 30%;
+    margin: 0;
+    padding: 8px 8px 32px;
+    border-radius: 4px;
+    background: #fbf7ef;
+    box-shadow:
+      0 1px 2px rgb(35 25 15 / 0.2),
+      0 16px 32px rgb(35 25 15 / 0.18);
+    opacity: 0;
+    transform: translateY(110vh) rotate(var(--r));
+    transition:
+      transform 500ms var(--ease),
+      box-shadow 500ms var(--ease);
+    will-change: transform;
+  }
+  .print.is-current {
+    z-index: 2;
+    box-shadow:
+      0 1px 2px rgb(35 25 15 / 0.2),
+      0 24px 48px rgb(35 25 15 / 0.3);
+  }
+  .print img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    border-radius: 2px;
+  }
+
+  @media (max-width: 899px) {
+    .stage {
+      grid-template-columns: 1fr;
+      grid-template-rows: minmax(0, 1fr) auto;
+      gap: 24px;
+      padding-top: 80px;
+    }
+    .collage {
+      grid-column: 1;
+      grid-row: 1;
+      height: 100%;
+    }
+    .captions {
+      grid-row: 2;
+    }
+    h2 {
+      font-size: var(--t-3xl);
+      line-height: 36px;
+    }
+    .intro h2 {
+      font-size: var(--t-2xl);
+      line-height: 32px;
+    }
+    .text {
+      font-size: var(--t-base);
+      line-height: 24px;
+    }
+    .print {
+      padding: 4px 4px 16px;
+    }
+  }
+
+  html:not(.js) .print {
+    opacity: 1;
+    transform: rotate(var(--r));
+  }
+</style>

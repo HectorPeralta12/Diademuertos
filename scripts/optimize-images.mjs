@@ -1,0 +1,35 @@
+import { mkdir, stat, writeFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import sharp from 'sharp';
+
+const root = new URL('../', import.meta.url);
+const images = [
+  ['assets/xolo/hero-pictorico-v1.png', 'xolo-hero.webp'],
+  ['assets/altar/checkpoints-pictoricos-v2/00-vista-general.png', 'altar-general.webp'],
+  ['assets/altar/checkpoints-pictoricos-v2/01-flores-velas-copal.png', 'altar-flores-velas-copal.webp'],
+  ['assets/altar/checkpoints-pictoricos-v2/02-comida-agua.png', 'altar-comida-agua.webp'],
+  ['assets/altar/checkpoints-pictoricos-v2/03-retratos-papel-picado.png', 'altar-retratos-papel-picado.webp'],
+];
+const output = new URL('public/images/', root);
+await mkdir(output, { recursive: true });
+const manifest = [];
+
+for (const [source, filename] of images) {
+  const sourcePath = fileURLToPath(new URL(source, root));
+  const targetPath = fileURLToPath(new URL(filename, output));
+  const result = await sharp(sourcePath)
+    .webp({ quality: 90, effort: 6 })
+    .toFile(targetPath);
+  const sourceInfo = await stat(sourcePath);
+  manifest.push({
+    source,
+    url: `/images/${filename}`,
+    width: result.width,
+    height: result.height,
+    originalBytes: sourceInfo.size,
+    webpBytes: result.size,
+  });
+  console.log(`${filename}: ${result.width} × ${result.height}, ${(result.size / 1024).toFixed(0)} KB`);
+}
+
+await writeFile(new URL('manifest.json', output), `${JSON.stringify(manifest, null, 2)}\n`);

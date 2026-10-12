@@ -1,0 +1,19 @@
+{
+  "name": "dia-de-muertos-praga",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "images:optimize": "node scripts/optimize-images.mjs",
+    "images:optimize:elements": "node scripts/optimize-element-images.mjs"
+  },
+  "dependencies": {
+    "astro": "7.3.8"
+  },
+  "devDependencies": {
+    "sharp": "^0.35.5"
+  }
+}

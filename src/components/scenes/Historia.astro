@@ -1,0 +1,136 @@
+---
+/**
+ * How the dates traveled: from Rome in 609 to the UNESCO list in 2008.
+ * A giant year counts toward each milestone while a marker slides along
+ * a timeline drawn to scale.
+ */
+
+const milestones = [
+  { year: 609, text: 'El papa Bonifacio IV consagra el Panteón de Agripa a Santa María y a todos los mártires. Es el antecedente de Todos los Santos.', src: 'INAH' },
+  { year: 835, text: 'El papa Gregorio IV fija la fiesta de Todos los Santos el 1 de noviembre.', src: 'INAH' },
+  { year: 998, text: 'Odilón, abad de Cluny, instituye el Día de los Fieles Difuntos el 2 de noviembre.', src: 'INAH' },
+  { year: 1540, text: 'Las fiestas llegan con los franciscanos. Entre 1535 y 1540, fray Toribio de Benavente, Motolinía, describe ofrendas de maíz, mantas, comida, pan, gallinas y cacao.', src: 'INAH' },
+  { year: 1859, text: 'El gobierno de Juárez seculariza los cementerios. En ese siglo, ir al panteón se vuelve una fiesta con comida, pulque y música.', src: 'INAH' },
+  { year: 1934, text: 'Entre 1934 y 1940 la fiesta se reinventa con un sentido nacionalista y laico, según la historiadora Elsa Malvido.', src: 'INAH' },
+  { year: 2003, text: 'La UNESCO proclama «Las fiestas indígenas dedicadas a los muertos» obra maestra del patrimonio oral e inmaterial.', src: 'UNESCO' },
+  { year: 2008, text: 'La fiesta entra en la Lista Representativa del Patrimonio Cultural Inmaterial de la Humanidad.', src: 'UNESCO' },
+];
+
+const FIRST = 600;
+const LAST = 2026;
+const pos = (y: number) => ((y - FIRST) / (LAST - FIRST)) * 100;
+const N = milestones.length;
+const at = milestones.map((_, i) => 0.04 + (i / N) * 0.94);
+const beat = (i: number) => (i === N - 1 ? at[i].toFixed(3) : `${at[i].toFixed(3)} ${at[i + 1].toFixed(3)}`);
+---
+
+<section class="scene historia" id="historia" data-scene="historia" data-theme="morado" data-chapter="historia" style="--len: 820">
+  <div class="stage">
+    <p class="giant" aria-hidden="true"><span data-year-display></span></p>
+
+    <ol class="captions stack">
+      {
+        milestones.map((m, i) => (
+          <li class="beat" data-beat={beat(i)} data-year={m.year} style={`--x: ${pos(m.year).toFixed(2)}`}>
+            <p class="mono">{m.year} · Fuente: {m.src}</p>
+            <p class="text">{m.text}</p>
+          </li>
+        ))
+      }
+    </ol>
+
+    <div class="timeline" aria-hidden="true">
+      <div class="line"></div>
+      {milestones.map((m, i) => <span class="tick" style={`--x: ${pos(m.year).toFixed(2)}; --at: ${at[i].toFixed(3)}`} />)}
+      <span class="edge mono" style="--x: 0">600</span>
+      <span class="edge mono" style="--x: 100">2026</span>
+    </div>
+  </div>
+</section>
+
+<style>
+  .stage {
+    display: grid;
+    grid-template-rows: 1fr auto auto;
+    padding: 96px var(--gutter) calc(64px + var(--chrome));
+    gap: 48px;
+  }
+
+  .giant {
+    align-self: center;
+    font-size: var(--t-9xl);
+    line-height: 1;
+    font-weight: 300;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    color: var(--fg);
+    transform: scale(1.6);
+    transform-origin: left center;
+  }
+
+  .captions {
+    list-style: none;
+    padding: 0;
+    max-width: 680px;
+  }
+  .captions .mono {
+    color: var(--accent);
+  }
+  .text {
+    margin-top: 12px;
+    font-size: var(--t-2xl);
+    line-height: 32px;
+    font-weight: 300;
+  }
+
+  .timeline {
+    position: relative;
+    height: 40px;
+  }
+  .line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 8px;
+    height: 1px;
+    background: color-mix(in srgb, var(--fg) 30%, transparent);
+  }
+  /* Ticks light up once their milestone has been reached */
+  .tick {
+    position: absolute;
+    left: calc(var(--x) * 1%);
+    top: 4px;
+    width: 9px;
+    height: 9px;
+    margin-left: -4px;
+    border-radius: 9999px;
+    --on: clamp(0, calc((var(--p) - var(--at)) * 400), 1);
+    background: color-mix(in srgb, var(--accent) calc(var(--on) * 100%), var(--bg));
+    box-shadow: inset 0 0 0 1px var(--fg);
+    transform: scale(calc(1 + var(--on) * 0.4));
+    transition: transform 600ms var(--ease);
+  }
+  .edge {
+    position: absolute;
+    top: 24px;
+    left: calc(var(--x) * 1%);
+    transform: translateX(calc(var(--x) * -1%));
+    color: var(--fg-dim);
+  }
+
+  @media (min-width: 900px) {
+    .giant {
+      transform: scale(2.2);
+    }
+  }
+  @media (max-width: 767px) {
+    .giant {
+      font-size: var(--t-8xl);
+      transform: none;
+    }
+    .text {
+      font-size: var(--t-lg);
+      line-height: 28px;
+    }
+  }
+</style>

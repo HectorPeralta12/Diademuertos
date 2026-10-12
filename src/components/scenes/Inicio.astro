@@ -1,0 +1,201 @@
+---
+/**
+ * Opening: the Xolo keeps watch in a loop. As you scroll, the copy leaves and
+ * a pre-rendered camera move, scrubbed by the scroll, travels from the Xolo to
+ * the full altar. Its last frame is the first view of the next scene.
+ */
+
+// Share of the scene that holds on the loop before the camera starts moving
+const HOLD = 0.28;
+---
+
+<section class="scene inicio" id="inicio" data-scene="inicio" data-theme="noche" data-chapter="ofrenda" style="--len: 380" data-hold={HOLD}>
+  <div class="stage" style={`--hold: ${HOLD}`}>
+    <video
+      class="xolo"
+      src="/videos/xolo-hero.mp4"
+      poster="/images/xolo-hero.webp"
+      autoplay
+      muted
+      loop
+      playsinline
+      preload="auto"
+      aria-hidden="true"
+      data-xolo
+    ></video>
+    <video class="move" muted playsinline preload="none" aria-hidden="true" data-move data-src="/videos/xolo-a-altar.mp4"></video>
+    <div class="shade" aria-hidden="true"></div>
+
+    <div class="copy" id="contenido">
+      <p class="mono kicker">1 y 2 de noviembre</p>
+      <h1>Día de<br />Muertos</h1>
+      <p class="lead">Una ofrenda para quienes vuelven a casa. <br />Recórrela nivel por nivel.</p>
+      <div class="actions">
+        <a class="btn btn--primary" href="#ofrenda">
+          Recorrer la ofrenda
+          <svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M205.66,149.66l-72,72a8,8,0,0,1-11.32,0l-72-72a8,8,0,0,1,11.32-11.32L120,196.69V40a8,8,0,0,1,16,0V196.69l58.34-58.35a8,8,0,0,1,11.32,11.32Z" /></svg>
+        </a>
+        <p class="mono proof">Con información del INAH y la UNESCO</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<script>
+  import { $ } from '../../scripts/dom';
+  import { onProgress, reducedMotion } from '../../scripts/scenes';
+  import { scrub } from '../../scripts/scrub';
+
+  const scene = $('[data-scene="inicio"]')!;
+  const hold = Number(scene.dataset.hold);
+  const loop = $<HTMLVideoElement>('[data-xolo]', scene)!;
+  const moveEl = $<HTMLVideoElement>('[data-move]', scene)!;
+  let last = 0;
+  const move = scrub(moveEl, moveEl.dataset.src!, () => update(last));
+
+  if (reducedMotion) {
+    loop.removeAttribute('autoplay');
+    loop.pause();
+  }
+
+  let moving = false;
+  function update(p: number) {
+    last = p;
+    // Once the move lands, the altar scene underneath holds the same frame: hand over instantly
+    scene.classList.toggle('is-done', p >= 0.999);
+    const t = (p - hold) / (1 - hold);
+    // The camera clip takes over from the loop once it starts moving; both open on the same frame
+    const on = t > 0 && move.ready;
+    if (on !== moving) {
+      moving = on;
+      moveEl.classList.toggle('is-on', on);
+      if (on) loop.pause();
+      else if (!reducedMotion) loop.play().catch(() => {});
+    }
+    move.seek(t);
+  }
+
+  // The move is the very next thing the visitor sees: fetch it right away
+  if (document.readyState === 'complete') move.load();
+  else window.addEventListener('load', () => move.load(), { once: true });
+  onProgress(scene, update);
+</script>
+
+<style>
+  /* Sits above the altar scene, which starts pinned underneath (see Ofrenda) */
+  .inicio {
+    z-index: 2;
+  }
+  .inicio.is-done .stage {
+    visibility: hidden;
+  }
+
+  .stage {
+    background: var(--noche);
+    /* Framing pans from the Xolo (right) to the centered altar of the next scene */
+    --from: 68%;
+    --t: clamp(0, (var(--p) - var(--hold)) / (1 - var(--hold)), 1);
+    --x: calc(var(--from) + (50% - var(--from)) * var(--t));
+  }
+
+  .xolo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: var(--x) 50%;
+  }
+
+  .move {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: var(--x) 50%;
+    opacity: 0;
+    /* The loop is paused wherever it was, not on the move's first frame: a short dissolve hides the cut */
+    transition: opacity 320ms var(--ease);
+  }
+  .move.is-on {
+    opacity: 1;
+  }
+
+  /* A flat veil for the copy; it lifts before the camera moves, so the altar arrives untouched */
+  .shade {
+    position: absolute;
+    inset: 0;
+    background: var(--noche);
+    opacity: calc(0.2 * (1 - clamp(0, var(--p) / var(--hold), 1)));
+  }
+
+  .copy {
+    position: absolute;
+    left: var(--gutter);
+    bottom: calc(96px + var(--chrome));
+    max-width: 680px;
+    opacity: calc(1 - var(--p) * 4.5);
+    transform: translateY(calc(var(--p) * -160px));
+  }
+
+  .kicker {
+    color: var(--cera);
+    text-shadow: 0 1px 12px rgb(0 0 0 / 0.6);
+  }
+
+  h1 {
+    margin-top: 16px;
+    font-size: var(--t-7xl);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    background: linear-gradient(90deg, #ffffff, #9b9b9b);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 2px 24px rgb(0 0 0 / 0.35));
+  }
+
+  .lead {
+    margin-top: 24px;
+    max-width: 680px;
+    font-size: var(--t-xl);
+    line-height: 28px;
+    font-weight: 300;
+    text-shadow: 0 1px 16px rgb(0 0 0 / 0.5);
+  }
+
+  .actions {
+    margin-top: 32px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px 24px;
+  }
+
+  .proof {
+    color: var(--cera);
+    opacity: 0.8;
+    text-shadow: 0 1px 12px rgb(0 0 0 / 0.6);
+  }
+
+  @media (min-width: 768px) {
+    h1 {
+      font-size: var(--t-8xl);
+    }
+  }
+  @media (min-width: 1280px) {
+    h1 {
+      font-size: var(--t-9xl);
+    }
+  }
+  @media (max-width: 767px) {
+    .stage {
+      --from: 74%;
+    }
+    .lead br {
+      display: none;
+    }
+  }
+</style>

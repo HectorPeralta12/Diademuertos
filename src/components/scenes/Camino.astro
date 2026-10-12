@@ -1,0 +1,1190 @@
+---
+import { marigold, EDGE } from '../../scripts/marigold';
+
+/**
+ * The marigold path, from the door of the house to the altar, at night.
+ *
+ * A full illustration drawn in SVG (adobe house, tile roof, cantera door frame,
+ * distant town, moon and stars, an altar with its marigold arch) with one light
+ * source per moment: the moon at first, then the warm light from the opening
+ * door, then the candles. A canvas on top carries what moves: petals that fall,
+ * flip and settle along the path with their shadows, marigold heads that bloom
+ * as the path passes, a small light (the soul) that follows it, and the copal
+ * smoke. Everything is placed with a seeded random, so it lands the same way on
+ * every visit.
+ */
+
+// Seeded random for the static scenery
+function random(seed: number) {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const r = random(2026);
+// A second stream for the refinements, so the original scenery keeps its exact layout
+const r2 = random(1031);
+const f = (n: number) => +n.toFixed(1);
+
+// Nine marigolds: three petal arrangements in three tones (golden, orange, deep orange).
+// Every flower in the scene is one of these, placed with <use>.
+const MARIGOLDS = [0, 1, 2].flatMap((shape) => [0, 1, 2].map((tone) => ({ id: `cm-mg-${shape}${tone}`, layers: marigold(shape, tone) })));
+type Flower = { x: number; y: number; r: number; v: string; rot: number };
+const flower = (x: number, y: number, rad: number, tone: number, shape = Math.floor(r2() * 3)): Flower => ({
+  x: f(x - rad),
+  y: f(y - rad),
+  r: f(rad * 2),
+  v: `#cm-mg-${shape}${tone}`,
+  rot: Math.round(r2() * 360),
+});
+
+// The path, in a 1600 × 900 field: from the door's threshold, toward the viewer, back to the altar
+const PATH = 'M300 702 C 360 760 470 800 620 812 S 900 830 1030 790 S 1180 742 1300 748';
+
+const MOON = { x: 860, y: 150, r: 46 };
+const stars = Array.from({ length: 110 }, () => {
+  const x = r() * 1600;
+  const y = r() * 520;
+  return { x: f(x), y: f(y), s: f(0.5 + r() * 1.3), d: f(2 + r() * 4), o: f(r() * -6), far: Math.hypot(x - MOON.x, y - MOON.y) > 90 };
+}).filter((s) => s.far);
+
+// Far hills with the lights of a town
+const hillsFar = 'M0 600 C 160 560 300 590 420 570 S 700 520 880 556 S 1180 590 1340 548 S 1520 560 1600 556 V 720 H 0 Z';
+const hillsNear = 'M0 650 C 200 630 330 660 520 640 S 860 610 1040 642 S 1360 668 1600 630 V 720 H 0 Z';
+const town = Array.from({ length: 70 }, () => ({ x: f(560 + r() * 520), y: f(560 + r() * 60), s: f(0.8 + r() * 1.2), d: f(3 + r() * 5), o: f(r() * -8) }));
+
+// Altar geometry (base at y 730, centered at x 1300)
+const tiers = [
+  { x: 1130, w: 340, y: 650, h: 80, top: 18 },
+  { x: 1166, w: 268, y: 562, h: 70, top: 16 },
+  { x: 1200, w: 200, y: 480, h: 66, top: 14 },
+];
+
+// The marigold arch: a garland of flowers along a half circle and down two posts.
+// A back row of smaller, deeper flowers sits just off the line, so the edge is irregular.
+const ORANGES = ['#f29a1c', '#ff9a1a', '#e8780c', '#f7a531', '#d9620b'];
+const TONE_OF = [1, 1, 2, 0, 2]; // each old color, as a marigold tone
+const archFront: Flower[] = [];
+for (let i = 0; i <= 46; i++) {
+  const a = Math.PI + (i / 46) * Math.PI;
+  const s = 9 + r() * 5;
+  archFront.push(flower(1300 + Math.cos(a) * 196, 470 + Math.sin(a) * 196, s * 1.12, TONE_OF[Math.floor(r() * ORANGES.length)], i % 3));
+}
+for (let y = 490; y < 724; y += 17) {
+  for (const x of [1104, 1496]) {
+    const jx = (r() - 0.5) * 5;
+    const s = 8 + r() * 4;
+    archFront.push(flower(x + jx, y, s * 1.15, TONE_OF[Math.floor(r() * ORANGES.length)]));
+  }
+}
+const archBack: Flower[] = [];
+for (let i = 0; i < 44; i++) {
+  const a = Math.PI + ((i + 0.5) / 44) * Math.PI;
+  const R = 196 + (i % 2 ? 1 : -1) * (6 + r2() * 2.5);
+  archBack.push(flower(1300 + Math.cos(a) * R, 470 + Math.sin(a) * R, 8 + r2() * 2.5, 2));
+}
+for (let y = 498; y < 716; y += 22) {
+  for (const x of [1104, 1496]) archBack.push(flower(x + (y % 44 ? 6 : -6), y, 8 + r2() * 2, 2));
+}
+const arch = [...archBack, ...archFront];
+
+// Papel picado hangs from cords. Each sheet is folded over its cord at an even
+// spacing along it, and tilts with the cord's slope where it hangs.
+type Cord = { a: [number, number]; c: [number, number]; b: [number, number] };
+const cordPath = ({ a, c, b }: Cord) => `M${a[0]} ${a[1]} Q ${c[0]} ${c[1]} ${b[0]} ${b[1]}`;
+function hang(cord: Cord, colors: string[], from: number, to: number) {
+  const { a, c, b } = cord;
+  const at = (t: number) => [
+    (1 - t) ** 2 * a[0] + 2 * (1 - t) * t * c[0] + t * t * b[0],
+    (1 - t) ** 2 * a[1] + 2 * (1 - t) * t * c[1] + t * t * b[1],
+  ];
+  // Sample the curve to space the sheets by length, not by t
+  const pts = Array.from({ length: 201 }, (_, i) => at(i / 200));
+  const len = [0];
+  for (let i = 1; i < pts.length; i++) len.push(len[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+  const total = len[len.length - 1];
+  return colors.map((col, i) => {
+    const want = (from + ((i + 0.5) / colors.length) * (to - from)) * total;
+    const k = len.findIndex((l) => l >= want);
+    const [x, y] = pts[k];
+    const [x2, y2] = pts[Math.min(k + 1, pts.length - 1)];
+    const [x1, y1] = pts[Math.max(k - 1, 0)];
+    return { c: col, x: f(x), y: f(y), angle: f((Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI), i };
+  });
+}
+
+// A point on the arch's center line (angle from π on the left to 2π on the right)
+const onArch = (a: number): [number, number] => [f(1300 + Math.cos(a) * 196), f(470 + Math.sin(a) * 196)];
+
+// Over the altar: a short cord tied to both shoulders of the arch
+const altarCord: Cord = { a: onArch(Math.PI + 0.9), c: [1300, 346], b: onArch(2 * Math.PI - 0.9) };
+const flags = hang(altarCord, ['#e8577e', '#f29a1c', '#7b2d8e', '#1f9e8a', '#ffd27a', '#e8577e', '#f29a1c'], 0.06, 0.94);
+
+// The camera frames a slightly tighter 16:9 window of the field
+const VB = { x: 60, y: 24, w: 1480, h: 832.5 };
+// Layers over part of the field (the arch, the candles) only cover their own box,
+// placed over the same field coordinates
+function region(x: number, y: number, w: number, h: number) {
+  const pc = (v: number) => `${(v * 100).toFixed(4)}%`;
+  return {
+    viewBox: `${x} ${y} ${w} ${h}`,
+    style: `left: ${pc((x - VB.x) / VB.w)}; top: ${pc((y - VB.y) / VB.h)}; width: ${pc(w / VB.w)}; height: ${pc(h / VB.h)}`,
+  };
+}
+const ARCH_BOX = region(1070, 240, 460, 500);
+const FRONT_BOX = region(960, 180, VB.x + VB.w - 960, VB.y + VB.h - 180);
+
+// A low stone wall behind the path, with pots and votive candles that light as the soul passes
+const STONES = ['#5b4a52', '#4c3d47', '#665360', '#54434d', '#45363f'];
+const wallStones: { x: number; y: number; w: number; h: number; c: string }[] = [];
+for (let row = 0; row < 4; row++) {
+  let x = 560 - (row % 2) * 18;
+  while (x < 1090) {
+    const w = 26 + r() * 30;
+    wallStones.push({ x: f(x), y: 646 + row * 15, w: f(Math.min(w, 1090 - x)), h: 13, c: STONES[Math.floor(r() * STONES.length)] });
+    x += w + 2;
+  }
+}
+const votives = [640, 712, 846, 918, 1052].map((x) => ({ x, at: +(0.1 + ((x - 300) / 1000) * 0.7).toFixed(3) }));
+const pots = [672, 880, 1000];
+
+// Papel picado strung from the corner of the roof to the left shoulder of the arch
+const skyCord: Cord = { a: [534, 296], c: [830, 468], b: onArch(Math.PI + 0.45) };
+const skyFlags = hang(skyCord, Array.from({ length: 9 }, (_, i) => ['#e8577e', '#f29a1c', '#7b2d8e', '#1f9e8a', '#ffd27a'][i % 5]), 0.06, 0.94);
+
+// A candle flame: a rounded base that tapers into a fine tip, and its bright core
+const flame = (x: number, base: number, h: number, w: number) =>
+  `M${x} ${base - h} C ${x + w * 0.3} ${base - h * 0.72} ${x + w * 1.08} ${base - h * 0.42} ${x + w} ${base - h * 0.2} C ${x + w * 0.95} ${base - h * 0.04} ${x + w * 0.5} ${base} ${x} ${base} C ${x - w * 0.5} ${base} ${x - w * 0.95} ${base - h * 0.04} ${x - w} ${base - h * 0.2} C ${x - w * 1.08} ${base - h * 0.42} ${x - w * 0.3} ${base - h * 0.72} ${x} ${base - h} Z`;
+
+// Candles: they light from the front, outside in, up to the top tier
+const candles = [
+  { x: 1112, y: 744, h: 54, at: 0.8 },
+  { x: 1488, y: 744, h: 54, at: 0.815 },
+  { x: 1158, y: 641, h: 32, at: 0.83 },
+  { x: 1442, y: 641, h: 32, at: 0.845 },
+  { x: 1196, y: 553, h: 34, at: 0.86 },
+  { x: 1404, y: 553, h: 34, at: 0.875 },
+  { x: 1244, y: 473, h: 40, at: 0.89 },
+  { x: 1356, y: 473, h: 40, at: 0.905 },
+];
+
+// Pan de muerto: four dough bones in a cross over the dome, turned 45° to us,
+// so two run down the front and two fall away over the back. Each bone is a
+// row of knuckles along a curve, with a knob at both ends.
+const BREAD = { x: 1300, base: 548, w: 40, h: 30 };
+function bone(p0: [number, number], c: [number, number], p1: [number, number], size: number) {
+  const knots: { x: number; y: number; r: number }[] = [];
+  const steps = 7;
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const x = (1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * c[0] + t * t * p1[0];
+    const y = (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * c[1] + t * t * p1[1];
+    const end = i === 0 || i === steps;
+    knots.push({ x: f(x), y: f(y), r: f(size * (end ? 1.25 : i % 2 ? 0.82 : 1)) });
+  }
+  return knots;
+}
+const top: [number, number] = [BREAD.x, BREAD.base - BREAD.h + 3];
+const bonesBack = [
+  bone(top, [1283, 521], [1266, 530], 2.6),
+  bone(top, [1317, 521], [1334, 530], 2.6),
+];
+const bonesFront = [
+  bone(top, [1281, 526], [1275, 546], 3.3),
+  bone(top, [1319, 526], [1325, 546], 3.3),
+];
+const sugar = Array.from({ length: 26 }, () => {
+  const t = r2();
+  const a = Math.PI + t * Math.PI;
+  const rr = Math.sqrt(r2()) * 0.92;
+  return { x: f(BREAD.x + Math.cos(a) * BREAD.w * rr), y: f(BREAD.base - 3 + Math.sin(a) * (BREAD.h - 3) * rr), s: f(0.5 + r2() * 0.6) };
+});
+
+// Flowers in the pots and vases
+const sillPot = [
+  [412, 504, 8.5], [428, 496, 9.5], [442, 505, 8], [420, 512, 7.5], [436, 513, 7],
+].map(([x, y, s], k) => flower(x, y, s, k % 3));
+const potFlowers = [672, 880, 1000].map((x, k) =>
+  [[-9, 597, 7.5], [9, 596, 7.5], [0, 586, 8.5], [1, 601, 6.5]].map(([dx, y, s], j) => flower(x + dx, y, s, (j + k) % 3)),
+);
+const VASE = [
+  [-13, 398, 8.5], [1, 387, 9.5], [13, 397, 8.5], [-6, 411, 7.5], [8, 412, 7],
+];
+const vases = [1214, 1386].map((x, k) => ({
+  x,
+  flowers: VASE.map(([dx, y, s], j) => flower(x + dx * (k ? -1 : 1), y, s, (j + k) % 3)),
+}));
+
+// Ground pebbles in perspective
+const pebbles = Array.from({ length: 90 }, () => {
+  const y = 720 + Math.pow(r(), 0.7) * 180;
+  const k = (y - 700) / 200;
+  return { x: f(r() * 1600), y: f(y), rx: f(2 + k * 6 * (0.5 + r())), ry: f(1 + k * 2.4 * (0.5 + r())), o: f(0.25 + r() * 0.35) };
+});
+---
+
+<section class="scene camino" data-scene="camino" data-theme="noche" data-chapter="elementos" style="--len: 560">
+  <div class="stage">
+    <div class="world" data-world data-vb={JSON.stringify(VB)}>
+      <svg class="art" viewBox={`${VB.x} ${VB.y} ${VB.w} ${VB.h}`} preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs>
+          <linearGradient id="cm-sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#07051a" />
+            <stop offset="0.55" stop-color="#160f38" />
+            <stop offset="0.8" stop-color="#2c1a4c" />
+            <stop offset="1" stop-color="#3d2254" />
+          </linearGradient>
+          <radialGradient id="cm-moon" cx="0.38" cy="0.36" r="0.7">
+            <stop offset="0" stop-color="#fffaf0" />
+            <stop offset="0.7" stop-color="#ece3cf" />
+            <stop offset="1" stop-color="#cfc3aa" />
+          </radialGradient>
+          <radialGradient id="cm-moonhalo">
+            <stop offset="0.3" stop-color="#cfd6ff" stop-opacity="0.22" />
+            <stop offset="1" stop-color="#cfd6ff" stop-opacity="0" />
+          </radialGradient>
+          <linearGradient id="cm-ground" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#2a1d33" />
+            <stop offset="0.35" stop-color="#1d1426" />
+            <stop offset="1" stop-color="#0d0915" />
+          </linearGradient>
+          <linearGradient id="cm-adobe" x1="0" y1="0" x2="0.35" y2="1">
+            <stop offset="0" stop-color="#b8694a" />
+            <stop offset="0.5" stop-color="#93503a" />
+            <stop offset="1" stop-color="#5d3226" />
+          </linearGradient>
+          <linearGradient id="cm-eave" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#000" stop-opacity="0.55" />
+            <stop offset="1" stop-color="#000" stop-opacity="0" />
+          </linearGradient>
+          <linearGradient id="cm-tile" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#7a2f1c" />
+            <stop offset="0.45" stop-color="#c25a35" />
+            <stop offset="1" stop-color="#6b2817" />
+          </linearGradient>
+          <pattern id="cm-tiles" width="26" height="40" patternUnits="userSpaceOnUse">
+            <rect width="26" height="40" fill="#5a2213" />
+            <rect x="1" y="0" width="24" height="40" rx="12" fill="url(#cm-tile)" />
+          </pattern>
+          <linearGradient id="cm-wood" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#3e2416" />
+            <stop offset="0.5" stop-color="#6a3f25" />
+            <stop offset="1" stop-color="#3a2114" />
+          </linearGradient>
+          <radialGradient id="cm-inside" cx="0.5" cy="0.75" r="0.8">
+            <stop offset="0" stop-color="#fff1c9" />
+            <stop offset="0.45" stop-color="#ffc56b" />
+            <stop offset="1" stop-color="#d97a1f" />
+          </radialGradient>
+          <radialGradient id="cm-spill" cx="0.5" cy="0" r="1">
+            <stop offset="0" stop-color="#ffc870" stop-opacity="0.75" />
+            <stop offset="0.6" stop-color="#ff9d3a" stop-opacity="0.18" />
+            <stop offset="1" stop-color="#ff9d3a" stop-opacity="0" />
+          </radialGradient>
+          <radialGradient id="cm-warm">
+            <stop offset="0" stop-color="#ffd27a" stop-opacity="0.75" />
+            <stop offset="0.35" stop-color="#ff9d3a" stop-opacity="0.32" />
+            <stop offset="1" stop-color="#ff9d3a" stop-opacity="0" />
+          </radialGradient>
+          <radialGradient id="cm-night">
+            <stop offset="0.35" stop-color="#0a0720" stop-opacity="0.72" />
+            <stop offset="1" stop-color="#0a0720" stop-opacity="0" />
+          </radialGradient>
+          <radialGradient id="cm-flame" cx="0.5" cy="0.7" r="0.6">
+            <stop offset="0" stop-color="#fffbe8" />
+            <stop offset="0.45" stop-color="#ffd27a" />
+            <stop offset="1" stop-color="#f2781c" />
+          </radialGradient>
+          <radialGradient id="cm-glow">
+            <stop offset="0" stop-color="#ffcf70" stop-opacity="0.85" />
+            <stop offset="0.4" stop-color="#ff9d3a" stop-opacity="0.25" />
+            <stop offset="1" stop-color="#ff9d3a" stop-opacity="0" />
+          </radialGradient>
+          <linearGradient id="cm-wax" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#d9cdb6" />
+            <stop offset="0.4" stop-color="#fbf5e8" />
+            <stop offset="1" stop-color="#bfb197" />
+          </linearGradient>
+          <linearGradient id="cm-cloth" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#6d2a8c" />
+            <stop offset="1" stop-color="#3f1656" />
+          </linearGradient>
+          <linearGradient id="cm-clothtop" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#d9c7a8" />
+            <stop offset="1" stop-color="#b9a585" />
+          </linearGradient>
+          <linearGradient id="cm-clay" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#7a3a1e" />
+            <stop offset="0.45" stop-color="#c06a38" />
+            <stop offset="1" stop-color="#6a3018" />
+          </linearGradient>
+          <linearGradient id="cm-sepia" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#d9c3a0" />
+            <stop offset="1" stop-color="#a88b66" />
+          </linearGradient>
+          <radialGradient id="cm-bread" cx="0.4" cy="0.3" r="0.8">
+            <stop offset="0" stop-color="#f3c47a" />
+            <stop offset="0.6" stop-color="#cf8a3c" />
+            <stop offset="1" stop-color="#9a5a22" />
+          </radialGradient>
+          <filter id="cm-grain" x="0" y="0" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch" />
+            <feColorMatrix type="saturate" values="0" />
+            <feComponentTransfer>
+              <feFuncA type="linear" slope="0.5" />
+            </feComponentTransfer>
+          </filter>
+          <filter id="cm-soft" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="14" />
+          </filter>
+          {
+            MARIGOLDS.map((m) => (
+              <symbol id={m.id} viewBox="-1 -1 2 2" overflow="visible">
+                {m.layers.map((l) => (
+                  <path d={l.d} fill={l.fill} stroke={l.stroke} stroke-width={l.stroke ? EDGE : undefined} stroke-linejoin="round" opacity={l.opacity} />
+                ))}
+              </symbol>
+            ))
+          }
+          <radialGradient id="cm-orange" cx="0.36" cy="0.32" r="0.75">
+            <stop offset="0" stop-color="#ffb04a" />
+            <stop offset="0.6" stop-color="#f2861c" />
+            <stop offset="1" stop-color="#c25e0e" />
+          </radialGradient>
+          <linearGradient id="cm-vase" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#6a3018" />
+            <stop offset="0.38" stop-color="#c06a38" />
+            <stop offset="0.6" stop-color="#a5552b" />
+            <stop offset="1" stop-color="#5a2812" />
+          </linearGradient>
+          <linearGradient id="cm-dough" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#f0b468" />
+            <stop offset="1" stop-color="#c47a32" />
+          </linearGradient>
+          <clipPath id="cm-wallclip">
+            <rect x="60" y="330" width="460" height="372" />
+          </clipPath>
+          <mask id="cm-cut" maskContentUnits="objectBoundingBox">
+            <rect width="1" height="1" fill="white" />
+            <path fill="black" d="M-0.1 0.84 H0 Q0.083 0.76 0.166 0.84 T0.333 0.84 T0.5 0.84 T0.666 0.84 T0.833 0.84 T1 0.84 H1.1 V1.1 H-0.1Z" />
+            <circle cx="0.5" cy="0.42" r="0.12" fill="black" />
+            {[0, 1, 2, 3, 4, 5].map((k) => {
+              const a = (k / 6) * Math.PI * 2;
+              return <circle cx={f(0.5 + Math.cos(a) * 0.26)} cy={f(0.42 + Math.sin(a) * 0.22)} r="0.07" fill="black" />;
+            })}
+          </mask>
+        </defs>
+
+        <!-- Sky, moon and stars -->
+        <rect width="1600" height="900" fill="url(#cm-sky)" />
+        <g class="stars">
+          {stars.map((s) => <circle cx={s.x} cy={s.y} r={s.s} style={`--d: ${s.d}s; --o: ${s.o}s`} />)}
+        </g>
+        <circle cx={MOON.x} cy={MOON.y} r={MOON.r * 3.4} fill="url(#cm-moonhalo)" />
+        <circle cx={MOON.x} cy={MOON.y} r={MOON.r} fill="url(#cm-moon)" />
+        <g class="craters">
+          <circle cx={MOON.x - 14} cy={MOON.y - 8} r="8" fill="#d8ccb2" />
+          <circle cx={MOON.x + 16} cy={MOON.y + 12} r="6" fill="#d8ccb2" />
+          <circle cx={MOON.x + 4} cy={MOON.y - 22} r="4" fill="#ddd2ba" />
+        </g>
+
+        <!-- Hills and the town far away -->
+        <path d={hillsFar} fill="#1e1440" />
+        <g class="town">
+          {town.map((l) => <rect x={l.x} y={l.y} width={l.s} height={l.s} style={`--d: ${l.d}s; --o: ${l.o}s`} />)}
+        </g>
+        <path d={hillsNear} fill="#170f30" />
+
+        <!-- Ground -->
+        <rect y="690" width="1600" height="210" fill="url(#cm-ground)" />
+        <rect y="690" width="1600" height="210" filter="url(#cm-grain)" opacity="0.16" style="mix-blend-mode: overlay" />
+        <g class="pebbles">
+          {pebbles.map((p) => <ellipse cx={p.x} cy={p.y} rx={p.rx} ry={p.ry} opacity={p.o} />)}
+        </g>
+
+        <!-- Agave by the house, for depth -->
+        <g class="agave">
+          <path d="M40 706 C 20 640 0 620 -10 600 C 20 630 40 650 52 700 Z" />
+          <path d="M48 706 C 50 630 70 590 92 560 C 80 610 70 650 62 706 Z" />
+          <path d="M60 706 C 100 650 130 640 160 630 C 120 660 96 680 74 708 Z" />
+          <path d="M36 708 C 0 680 -20 676 -40 676 C -10 690 10 700 30 712 Z" />
+        </g>
+
+        <!-- The house -->
+        <g class="house">
+          <ellipse cx="290" cy="704" rx="250" ry="10" fill="#000" opacity="0.4" />
+          <rect x="60" y="330" width="460" height="372" fill="url(#cm-adobe)" />
+          <g clip-path="url(#cm-wallclip)">
+            <rect x="60" y="330" width="460" height="372" filter="url(#cm-grain)" opacity="0.5" style="mix-blend-mode: multiply" />
+            <!-- Patches where the plaster fell off, showing the adobe bricks -->
+            <g class="bricks">
+              <path d="M420 600 h40 v14 h-40z M410 614 h40 v14 h-40z M452 614 h30 v14 h-30z M430 628 h36 v14 h-36z" />
+              <path d="M90 420 h34 v12 h-34z M126 420 h26 v12 h-26z M100 432 h36 v12 h-36z" />
+            </g>
+            <rect x="60" y="330" width="460" height="70" fill="url(#cm-eave)" />
+            <!-- Moonlight from the upper right grazes the wall -->
+            <rect x="60" y="330" width="460" height="372" fill="#a9b4ff" opacity="0.06" />
+          </g>
+          <!-- Beams (vigas) under the roof -->
+          {[96, 172, 248, 324, 400, 476].map((x) => (
+            <g>
+              <rect x={x} y="334" width="16" height="22" rx="3" fill="#4a2a18" />
+              <rect x={x} y="334" width="16" height="6" rx="3" fill="#7a4a2c" />
+              <rect x={x - 2} y="356" width="20" height="8" fill="#000" opacity="0.25" />
+            </g>
+          ))}
+          <!-- Tile roof -->
+          <rect x="40" y="290" width="500" height="44" fill="url(#cm-tiles)" />
+          <rect x="40" y="286" width="500" height="8" rx="3" fill="#8a3a22" />
+          <rect x="40" y="330" width="500" height="5" fill="#000" opacity="0.45" />
+
+          <!-- Lantern by the door -->
+          <g class="lantern">
+            <path d="M200 476 h24 M212 476 v10" stroke="#1d1410" stroke-width="3" fill="none" />
+            <path d="M202 486 h20 l-3 34 h-14 z" fill="#2a1d16" />
+            <rect x="206" y="492" width="12" height="22" fill="#ffd27a" class="lantern-glass" />
+            <circle cx="212" cy="503" r="40" fill="url(#cm-glow)" class="lantern-glow" />
+          </g>
+
+          <!-- Window with iron bars; it lights up with the house -->
+          <g class="window">
+            <rect x="372" y="446" width="104" height="96" rx="4" fill="#cdb796" />
+            <rect x="380" y="454" width="88" height="80" fill="#130d22" />
+            <rect x="380" y="454" width="88" height="80" fill="url(#cm-inside)" class="lit-in" />
+            {[396, 412, 428, 444, 460].map((x) => <rect x={x - 2} y="454" width="4" height="80" fill="#1a1412" />)}
+            <rect x="380" y="490" width="88" height="4" fill="#1a1412" />
+            <rect x="366" y="540" width="116" height="10" rx="2" fill="#b9a585" />
+            <!-- Pot of marigolds on the sill -->
+            <path d="M414 518 q -6 -6 -10 -14 q 8 2 12 10 z M440 518 q 6 -6 12 -12 q -8 0 -14 8 z" fill="#2f5a2a" />
+            {sillPot.map((m) => <use href={m.v} x={m.x} y={m.y} width={m.r} height={m.r} transform={`rotate(${m.rot} ${m.x + m.r / 2} ${m.y + m.r / 2})`} />)}
+            <path d="M406 540 l3 -22 h30 l3 22 z" fill="url(#cm-clay)" />
+            <rect x="404" y="514" width="40" height="6" rx="2" fill="#a0532c" />
+          </g>
+
+          <!-- Doorway: cantera frame, warm interior, and the wooden leaf that swings open -->
+          <path d="M240 704 V 560 A 60 60 0 0 1 360 560 V 704 Z" fill="#c9b18e" />
+          <path d="M240 704 V 560 A 60 60 0 0 1 360 560 V 704" fill="none" stroke="#e3d0ae" stroke-width="3" opacity="0.6" />
+          <path d="M256 702 V 566 A 44 44 0 0 1 344 566 V 702 Z" fill="#120b10" />
+          <path d="M256 702 V 566 A 44 44 0 0 1 344 566 V 702 Z" fill="url(#cm-inside)" class="lit-in" />
+          <g class="leaf">
+            <path d="M256 702 V 566 A 44 44 0 0 1 344 566 V 702 Z" fill="url(#cm-wood)" />
+            {[278, 300, 322].map((x) => <path d={`M${x} 528 V 702`} stroke="#2a170d" stroke-width="2" />)}
+            {[590, 650].map((y) => <rect x="258" y={y} width="84" height="7" fill="#2a170d" opacity="0.7" />)}
+            {[268, 288, 312, 332].flatMap((x) => [594, 654].map((y) => <circle cx={x} cy={y + 3} r="2.4" fill="#c9a86a" />))}
+            <circle cx="334" cy="632" r="4" fill="none" stroke="#c9a86a" stroke-width="2" />
+          </g>
+          <rect x="232" y="700" width="136" height="8" fill="#a9937a" />
+        </g>
+
+        <!-- Papel picado from the corner of the roof to the arch -->
+        <path d={cordPath(skyCord)} fill="none" stroke="#d9c7a8" stroke-width="1.5" opacity="0.6" />
+        <circle cx={skyCord.a[0]} cy={skyCord.a[1]} r="2.5" fill="#2a1d16" />
+        {
+          skyFlags.map((fl) => (
+            <g transform={`translate(${fl.x} ${fl.y}) rotate(${fl.angle})`}>
+              <g class="flag" style={`--i: ${fl.i}`}>
+                <rect x="-15" y="-1.5" width="30" height="37.5" fill={fl.c} mask="url(#cm-cut)" opacity="0.92" />
+                <rect x="-15" y="-1.5" width="30" height="3" fill="#000" opacity="0.22" />
+              </g>
+            </g>
+          ))
+        }
+
+        <!-- Low stone wall behind the path -->
+        <g class="barda">
+          <rect x="556" y="640" width="538" height="68" fill="#2c2230" />
+          {wallStones.map((st) => <rect x={st.x} y={st.y} width={st.w} height={st.h} rx="4" fill={st.c} />)}
+          <rect x="550" y="630" width="550" height="12" rx="3" fill="#7a6670" />
+          <rect x="550" y="630" width="550" height="3" rx="1.5" fill="#a8949c" opacity="0.6" />
+          <rect x="556" y="700" width="538" height="10" fill="#000" opacity="0.3" />
+          {
+            pots.map((x, k) => (
+              <g>
+                <path d={`M${x - 6} 608 q -8 -4 -12 -12 q 9 1 14 9 z M${x + 6} 608 q 8 -4 13 -11 q -9 0 -15 8 z`} fill="#2f5a2a" />
+                {potFlowers[k].map((m) => <use href={m.v} x={m.x} y={m.y} width={m.r} height={m.r} transform={`rotate(${m.rot} ${m.x + m.r / 2} ${m.y + m.r / 2})`} />)}
+                <path d={`M${x - 14} 632 l 4 -22 h 20 l 4 22 z`} fill="url(#cm-clay)" />
+                <rect x={x - 16} y="606" width="32" height="5" rx="2" fill="#a0532c" />
+              </g>
+            ))
+          }
+          {
+            votives.map((v, i) => (
+              <g class="candle votive" style={`--at: ${v.at}; --i: ${i + 3}`}>
+                <circle class="halo" cx={v.x} cy="612" r="46" fill="url(#cm-glow)" />
+                <rect x={v.x - 6} y="618" width="12" height="13" fill="#f6efe2" opacity="0.85" />
+                <path d={`M${v.x - 8} 612 L ${v.x - 7} 632 H ${v.x + 7} L ${v.x + 8} 612 Z`} fill="#f3ece0" opacity="0.26" />
+                <ellipse cx={v.x} cy="612" rx="8" ry="1.8" fill="none" stroke="#fbf5e8" stroke-width="0.8" opacity="0.5" />
+                <path d={`M${v.x} 618 q 0.5 -1.5 -0.4 -3`} stroke="#2a1d16" stroke-width="1" fill="none" stroke-linecap="round" />
+                <g class="flame">
+                  <path d={flame(v.x, 617, 16, 4.2)} fill="url(#cm-flame)" />
+                  <path d={flame(v.x, 616.5, 6, 1.6)} fill="#fffbe8" />
+                </g>
+              </g>
+            ))
+          }
+        </g>
+
+        <!-- Light spilling from the door across the ground -->
+        <path class="spill" d="M262 706 L 338 706 L 700 900 L 20 900 Z" fill="url(#cm-spill)" filter="url(#cm-soft)" />
+
+        <path d={PATH} class="guide" data-path />
+
+        <!-- The altar -->
+        <g class="altar">
+          <ellipse class="backlight" cx="1300" cy="520" rx="320" ry="300" fill="url(#cm-warm)" />
+          <ellipse class="pool" cx="1300" cy="770" rx="340" ry="70" fill="url(#cm-warm)" />
+          <ellipse cx="1300" cy="744" rx="230" ry="16" fill="#000" opacity="0.45" />
+
+          <!-- Papel picado garland, tied to the shoulders of the arch -->
+          <path d={cordPath(altarCord)} fill="none" stroke="#d9c7a8" stroke-width="1.5" opacity="0.7" />
+          {
+            flags.map((fl) => (
+              <g transform={`translate(${fl.x} ${fl.y}) rotate(${fl.angle})`}>
+                <g class="flag" style={`--i: ${fl.i}`}>
+                  <rect x="-13" y="-1.5" width="26" height="33.5" fill={fl.c} mask="url(#cm-cut)" />
+                  <rect x="-13" y="-1.5" width="26" height="3" fill="#000" opacity="0.22" />
+                </g>
+              </g>
+            ))
+          }
+
+          <!-- Tiers: purple cloth fronts with a papel picado trim, pale tops in perspective -->
+          {
+            tiers.map((t) => (
+              <g>
+                <path d={`M${t.x} ${t.y} L ${t.x + t.w} ${t.y} L ${t.x + t.w - t.top} ${t.y - t.top} L ${t.x + t.top} ${t.y - t.top} Z`} fill="url(#cm-clothtop)" />
+                <rect x={t.x} y={t.y} width={t.w} height={t.h} fill="url(#cm-cloth)" />
+                <rect x={t.x} y={t.y} width={t.w} height="10" fill="#f29a1c" />
+                <path
+                  d={`M${t.x} ${t.y + 10} ${Array.from({ length: Math.round(t.w / 12) }, (_, k) => {
+                    const step = t.w / Math.round(t.w / 12);
+                    return `L ${f(t.x + k * step + step / 2)} ${t.y + 18} L ${f(t.x + (k + 1) * step)} ${t.y + 10}`;
+                  }).join(' ')} Z`}
+                  fill="#f29a1c"
+                />
+                <rect x={t.x + t.w / 2 - 28} y={t.y + 22} width="56" height={t.h - 26} fill="#e8577e" mask="url(#cm-cut)" opacity="0.85" />
+                <rect x={t.x} y={t.y + t.h - 6} width={t.w} height="6" fill="#000" opacity="0.3" />
+              </g>
+            ))
+          }
+
+          <!-- Top tier: the portrait -->
+          <g class="portrait">
+            <ellipse cx="1300" cy="478" rx="46" ry="3" fill="#000" opacity="0.35" />
+            <rect x="1258" y="376" width="84" height="102" rx="3" fill="#4a2a18" />
+            <rect x="1262.5" y="380.5" width="75" height="93" rx="1.5" fill="none" stroke="#c9a86a" stroke-width="1.2" opacity="0.75" />
+            <rect x="1266" y="384" width="68" height="86" fill="url(#cm-sepia)" />
+            <circle cx="1300" cy="413" r="13" fill="#7a5e40" />
+            <path d="M1276 470 C 1277 446 1287 434 1300 434 C 1313 434 1323 446 1324 470 Z" fill="#6a4f34" />
+            <rect x="1266" y="384" width="68" height="4" fill="#000" opacity="0.18" />
+            <rect x="1258" y="376" width="84" height="102" rx="3" fill="none" stroke="#2a170d" stroke-width="1" opacity="0.6" />
+          </g>
+
+          <!-- Vases of marigolds and cockscomb on the top tier -->
+          {
+            vases.map(({ x, flowers }, k) => (
+              <g>
+                <!-- Stems from the mouth of the vase to each head, with a few leaves -->
+                {flowers.map((m) => {
+                  const cx = m.x + m.r / 2;
+                  const cy = m.y + m.r / 2;
+                  const sx = x + (cx - x) * 0.25;
+                  return <path d={`M${f(sx)} 432 Q ${f(sx + (cx - sx) * 0.2)} ${f((cy + 432) / 2)} ${f(cx)} ${f(cy)}`} stroke="#3d6b2a" stroke-width="1.8" fill="none" stroke-linecap="round" />;
+                })}
+                <path d={k ? `M${x - 2} 426 q -12 -4 -16 -14 q 12 2 16 12 z` : `M${x + 2} 426 q 12 -4 16 -14 q -12 2 -16 12 z`} fill="#3d6b2a" />
+                <!-- Cockscomb (terciopelo) behind the marigolds -->
+                <path d={`M${x + (k ? 9 : -9) - 6} 404 C ${x + (k ? 9 : -9) - 9} 392 ${x + (k ? 9 : -9) - 4} 380 ${x + (k ? 9 : -9) - 1} 386 C ${x + (k ? 9 : -9) + 1} 376 ${x + (k ? 9 : -9) + 8} 380 ${x + (k ? 9 : -9) + 6} 390 C ${x + (k ? 9 : -9) + 9} 394 ${x + (k ? 9 : -9) + 6} 404 ${x + (k ? 9 : -9)} 405 Z`} fill="#b3134f" />
+                {flowers.map((m) => <use href={m.v} x={m.x} y={m.y} width={m.r} height={m.r} transform={`rotate(${m.rot} ${m.x + m.r / 2} ${m.y + m.r / 2})`} />)}
+                <!-- The vase: foot, round belly, narrow neck and a flared lip -->
+                <ellipse cx={x} cy="466" rx="13" ry="2.5" fill="#000" opacity="0.35" />
+                <path d={`M${x - 10} 466 C ${x - 19} 458 ${x - 19} 443 ${x - 8} 436 L ${x - 8} 432 H ${x + 8} L ${x + 8} 436 C ${x + 19} 443 ${x + 19} 458 ${x + 10} 466 Z`} fill="url(#cm-vase)" />
+                <rect x={x - 11} y="428" width="22" height="5" rx="2" fill="#a0532c" />
+                <path d={`M${x - 15.5} 449 Q ${x} 454 ${x + 15.5} 449`} stroke="#e8577e" stroke-width="2.5" fill="none" />
+                <path d={`M${x - 14} 455 Q ${x} 459 ${x + 14} 455`} stroke="#ffd27a" stroke-width="1" fill="none" opacity="0.8" />
+              </g>
+            ))
+          }
+
+          <!-- Middle tier: pan de muerto, glass of water, oranges -->
+          <g>
+            <!-- Pan de muerto: a domed loaf, its four bones in a cross and the ball on top -->
+            <ellipse cx="1300" cy="549" rx="44" ry="5" fill="#000" opacity="0.35" />
+            <path d="M1260 548 C 1259 532 1276 518 1300 518 C 1324 518 1341 532 1340 548 Q 1300 552 1260 548 Z" fill="url(#cm-bread)" />
+            <path d="M1262 545 Q 1300 550 1338 545 Q 1340 547 1340 548 Q 1300 552 1260 548 Q 1260 546 1262 545 Z" fill="#7a4216" opacity="0.5" />
+            {sugar.map((g) => <circle cx={g.x} cy={g.y} r={g.s} fill="#fff6e4" opacity="0.6" />)}
+            {
+              [...bonesBack, ...bonesFront].map((b, j) => (
+                <g opacity={j < 2 ? 0.9 : 1}>
+                  {b.map((k) => <circle cx={k.x} cy={k.y + 1.1} r={k.r} fill="#7a4216" opacity="0.55" />)}
+                  {b.map((k) => <circle cx={k.x} cy={k.y} r={k.r} fill="url(#cm-dough)" />)}
+                  {b.map((k) => <circle cx={f(k.x - k.r * 0.3)} cy={f(k.y - k.r * 0.35)} r={f(k.r * 0.38)} fill="#ffe2ad" opacity="0.7" />)}
+                </g>
+              ))
+            }
+            <circle cx="1300" cy="519.5" r="6.5" fill="#7a4216" opacity="0.5" />
+            <circle cx="1300" cy="518" r="6.5" fill="url(#cm-dough)" />
+            <circle cx="1298" cy="516" r="2.4" fill="#ffe2ad" opacity="0.75" />
+            <!-- Glass of water -->
+            <path d="M1235 524 L 1237 548 H 1251 L 1253 524 Z" fill="#bcd7ff" opacity="0.3" />
+            <path d="M1236.4 531 L 1237.6 547 H 1250.4 L 1251.6 531 Z" fill="#9cc2ff" opacity="0.35" />
+            <ellipse cx="1244" cy="524" rx="9" ry="1.6" fill="none" stroke="#e6f0ff" stroke-width="0.8" opacity="0.6" />
+            <rect x="1238" y="527" width="2.5" height="19" fill="#fff" opacity="0.45" />
+            {[1351, 1364, 1377, 1357.5, 1370.5].map((x, k) => (
+              <g>
+                <circle cx={x} cy={k < 3 ? 541 : 530} r="7" fill="url(#cm-orange)" />
+                <circle cx={x + 0.5} cy={k < 3 ? 535 : 524} r="1" fill="#3d5a24" />
+              </g>
+            ))}
+          </g>
+
+          <!-- Bottom tier: sugar skulls -->
+          {
+            [1222, 1378].map((x, k) => (
+              <g>
+                <ellipse cx={x} cy="644" rx="12" ry="2" fill="#000" opacity="0.3" />
+                <path
+                  d={`M${x} 612 C ${x + 8} 612 ${x + 13} 618 ${x + 13} 626 C ${x + 13} 631 ${x + 11} 634 ${x + 8} 635 L ${x + 8} 641 Q ${x} 645 ${x - 8} 641 L ${x - 8} 635 C ${x - 11} 634 ${x - 13} 631 ${x - 13} 626 C ${x - 13} 618 ${x - 8} 612 ${x} 612 Z`}
+                  fill="#f6efe2"
+                />
+                <path d={`M${x - 8} 638.5 H ${x + 8} M${x - 4} 636.5 v 4.5 M${x} 636.5 v 5 M${x + 4} 636.5 v 4.5`} stroke="#c9b9a0" stroke-width="0.8" fill="none" />
+                {[-5, 5].map((dx) => (
+                  <g>
+                    <circle cx={x + dx} cy="627" r="3.8" fill={k ? '#1f9e8a' : '#e8577e'} />
+                    <circle cx={x + dx} cy="627" r="1.5" fill="#2a1d16" opacity="0.6" />
+                  </g>
+                ))}
+                <path d={`M${x} 631 l -1.8 3 h 3.6 z`} fill="#7b2d8e" />
+                <path d={`M${x - 9} 622 q 4 -3.5 8 0 M${x + 1} 622 q 4 -3.5 8 0`} stroke="#f29a1c" stroke-width="1.4" fill="none" stroke-linecap="round" />
+                <circle cx={x} cy="617" r="2" fill={k ? '#e8577e' : '#1f9e8a'} />
+                {[0, 1, 2, 3, 4].map((j) => <circle cx={f(x + Math.cos((j / 5) * Math.PI * 2) * 3.2)} cy={f(617 + Math.sin((j / 5) * Math.PI * 2) * 3.2)} r="1.3" fill="#f29a1c" />)}
+              </g>
+            ))
+          }
+
+          <!-- Copal burner on the ground, in front -->
+          <g class="copal">
+            <path d="M1282 752 h36 l-6 -14 h-24 z" fill="url(#cm-clay)" />
+            <path d="M1270 738 q 30 18 60 0 l -4 -12 h -52 z" fill="url(#cm-clay)" />
+            <ellipse cx="1300" cy="726" rx="26" ry="6" fill="#2a1208" />
+            <ellipse cx="1300" cy="726" rx="16" ry="3.5" fill="#ff7a2a" class="embers" />
+          </g>
+        </g>
+      </svg>
+
+      <!-- The arch never changes, so it gets a layer of its own that is painted once,
+           instead of being repainted with every flicker of the candles around it -->
+      <svg class="art part arch-layer" viewBox={ARCH_BOX.viewBox} style={ARCH_BOX.style} aria-hidden="true">
+        <g class="arch">
+          <!-- The frame the flowers are tied to, mostly hidden behind them -->
+          <path d="M1104 718 V 470 A 196 196 0 0 1 1496 470 V 718" fill="none" stroke="#5a2a0c" stroke-width="16" />
+          {arch.map((m) => <use href={m.v} x={m.x} y={m.y} width={m.r} height={m.r} transform={`rotate(${m.rot} ${m.x + m.r / 2} ${m.y + m.r / 2})`} />)}
+        </g>
+      </svg>
+
+      <!-- In front of the arch: the night over the altar and the candles -->
+      <svg class="art part" viewBox={FRONT_BOX.viewBox} style={FRONT_BOX.style} aria-hidden="true">
+        <!-- Night veil over the altar: it lifts as the candles light -->
+        <ellipse class="veil" cx="1300" cy="520" rx="330" ry="330" fill="url(#cm-night)" />
+
+        <!-- Candles -->
+        {
+          candles.map((c, i) => (
+            <g class="candle" style={`--at: ${c.at}; --i: ${i}`}>
+              <ellipse cx={c.x} cy={c.y} rx="9" ry="2" fill="#000" opacity="0.3" />
+              <rect x={c.x - 7} y={c.y - c.h} width="14" height={c.h} rx="1.5" fill="url(#cm-wax)" />
+              <ellipse cx={c.x} cy={c.y - c.h} rx="7" ry="2" fill="#fffaf0" />
+              <path d={`M${c.x - 7} ${c.y - c.h} q 0.5 9 -0.2 13 q 2.6 1 2.8 -3 q 0.4 -6 0.4 -10 z`} fill="#efe6d4" />
+              <path d={`M${c.x} ${c.y - c.h} q 0.6 -2.4 -0.6 -4.8`} stroke="#2a1d16" stroke-width="1.3" fill="none" stroke-linecap="round" />
+              <circle class="halo" cx={c.x} cy={c.y - c.h - 12} r="58" fill="url(#cm-glow)" />
+              <g class="flame">
+                <path d={flame(c.x, c.y - c.h - 2, 24, 5.6)} fill="url(#cm-flame)" />
+                <path d={flame(c.x, c.y - c.h - 2.5, 9, 2.2)} fill="#fffbe8" />
+              </g>
+            </g>
+          ))
+        }
+      </svg>
+      <canvas class="fx" data-fx aria-hidden="true"></canvas>
+    </div>
+
+    <ol class="captions stack">
+      <li class="beat" data-beat="0 0.34">
+        <p class="mono">El camino</p>
+        <h2>De la puerta de la casa al altar</h2>
+        <p class="text">Las flores de cempasúchil marcan el camino desde la entrada de la casa hasta la ofrenda.</p>
+        <p class="mono source">Fuente: INAH</p>
+      </li>
+      <li class="beat" data-beat="0.34 0.76">
+        <p class="mono">El color</p>
+        <h2>Un pedazo de sol en el suelo</h2>
+        <p class="text">Su amarillo se asocia con el sol, que guía el alma de los difuntos.</p>
+        <p class="mono source">Fuente: Secretaría de Cultura</p>
+      </li>
+      <li class="beat" data-beat="0.76">
+        <p class="mono">La llegada</p>
+        <h2>Y las veladoras las reciben</h2>
+        <p class="text">Las veladoras guían a las ánimas hasta la ofrenda.</p>
+        <p class="mono source">Fuente: INAH</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<script>
+  import { $ } from '../../scripts/dom';
+  import { clamp, onProgress, onResize, reducedMotion } from '../../scripts/scenes';
+  import { EDGE, LOOSE_PETALS, PETAL_CREASE, marigold } from '../../scripts/marigold';
+
+  const scene = $('[data-scene="camino"]')!;
+  const world = $('[data-world]', scene)!;
+  const canvas = $<HTMLCanvasElement>('[data-fx]', scene)!;
+  const guide = $<SVGPathElement>('[data-path]', scene)!;
+  const ctx = canvas.getContext('2d')!;
+
+  function random(seed: number) {
+    return () => {
+      seed = (seed + 0x6d2b79f5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  // Timeline of the scene (in its scroll progress)
+  const OPEN = 0.1; // the door has opened
+  const ARRIVE = 0.8; // the path reaches the altar
+  const FALL = 0.06; // how long one petal takes to fall
+
+  const length = guide.getTotalLength();
+  const pointAt = (u: number) => guide.getPointAtLength(clamp(u) * length);
+  const front = (p: number) => clamp((p - OPEN) / (ARRIVE - OPEN));
+  // Things near the viewer (lower on the ground) are drawn bigger
+  const depth = (y: number) => 0.55 + 0.8 * clamp((y - 690) / 160);
+
+  // Petals: each lands somewhere along the path, a little to either side
+  const rand = random(1102);
+  const PETALS = ['#f29a1c', '#ffb23f', '#e8780c', '#ffc35a', '#d9620b', '#f7a531'];
+  const petals = Array.from({ length: 420 }, (_, i) => {
+    const along = rand();
+    const at = pointAt(along);
+    const ahead = pointAt(along + 0.002);
+    const angle = Math.atan2(ahead.y - at.y, ahead.x - at.x);
+    const spread = (rand() - 0.5) * 2 * (8 + rand() * 22) * depth(at.y);
+    const x = at.x - Math.sin(angle) * spread;
+    const y = at.y + Math.cos(angle) * spread * 0.45;
+    return {
+      along,
+      x,
+      y,
+      k: depth(y),
+      size: 3.4 + rand() * 3.4,
+      squash: 0.5 + rand() * 0.3,
+      shape: i % LOOSE_PETALS.length,
+      rot: rand() * Math.PI * 2,
+      spin: (rand() - 0.5) * 10,
+      flips: 1 + rand() * 3,
+      drift: (rand() - 0.5) * 90,
+      height: 160 + rand() * 300,
+      color: PETALS[Math.floor(rand() * PETALS.length)],
+    };
+  }).sort((a, b) => a.y - b.y);
+
+  // Whole marigold heads bloom at intervals along the path
+  const blooms = Array.from({ length: 13 }, (_, i) => {
+    const along = 0.04 + (i / 12) * 0.9;
+    const at = pointAt(along);
+    const side = i % 2 ? 1 : -1;
+    return { along, x: at.x + side * (10 + rand() * 16) * depth(at.y), y: at.y + side * 6 * depth(at.y), k: depth(at.y), seed: rand() * 10, head: i % 9 };
+  });
+
+  // The same shapes as the flowers in the SVG, built once
+  const petalShapes = LOOSE_PETALS.map((d) => new Path2D(d));
+  const crease = new Path2D(PETAL_CREASE);
+  const heads = [0, 1, 2].flatMap((shape) =>
+    [0, 1, 2].map((tone) => marigold(shape, tone).map((l) => ({ ...l, path: new Path2D(l.d) }))),
+  );
+
+  function drawPetal(s: number, squash: number, color: string, shape: number) {
+    // A loose petal: rounded heel, frilled tip, a little longer than it is wide
+    const len = s * 2.1;
+    ctx.scale(len, len * (0.85 + squash * 0.3));
+    ctx.fillStyle = color;
+    ctx.fill(petalShapes[shape]);
+    ctx.lineWidth = 0.035;
+    ctx.strokeStyle = 'rgba(120, 40, 0, 0.45)';
+    ctx.stroke(petalShapes[shape]);
+    ctx.lineWidth = 0.05;
+    ctx.strokeStyle = 'rgba(150, 60, 0, 0.3)';
+    ctx.stroke(crease);
+  }
+
+  function drawBloom(R: number, seed: number, head: number) {
+    // Its shadow on the ground, then the flower head itself
+    ctx.fillStyle = 'rgba(5, 3, 12, 0.35)';
+    ctx.beginPath();
+    ctx.ellipse(R * 0.15, R * 0.55, R * 1.05, R * 0.45, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.rotate(seed);
+    ctx.scale(R, R);
+    ctx.lineWidth = EDGE;
+    ctx.lineJoin = 'round';
+    for (const l of heads[head]) {
+      ctx.globalAlpha = l.opacity ?? 1;
+      ctx.fillStyle = l.fill;
+      ctx.fill(l.path);
+      if (l.stroke) {
+        ctx.strokeStyle = l.stroke;
+        ctx.stroke(l.path);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // Copal smoke: a soft sprite, reused by every particle
+  const puff = document.createElement('canvas');
+  puff.width = puff.height = 64;
+  {
+    const g = puff.getContext('2d')!;
+    const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0, 'rgba(236, 226, 248, 0.45)');
+    grad.addColorStop(1, 'rgba(225, 215, 240, 0)');
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 64, 64);
+  }
+  const smoke = Array.from({ length: 26 }, (_, i) => ({ phase: i / 26, wobble: rand() * 6, size: 0.7 + rand() * 0.6 }));
+
+  // The canvas maps the same view box as the SVG
+  const VB = JSON.parse(world.dataset.vb ?? '{"x":0,"y":0,"w":1600,"h":900}');
+  let scale = 1;
+  let dpr = 1;
+  function measure() {
+    const rect = world.getBoundingClientRect();
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+    scale = rect.width / VB.w;
+  }
+
+  let p = 0;
+  function draw(now: number) {
+    // With reduced motion nothing moves on its own: the same scroll position always draws the same frame
+    const time = reducedMotion ? 0 : now;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.setTransform(dpr * scale, 0, 0, dpr * scale, -VB.x * dpr * scale, -VB.y * dpr * scale);
+
+    const lead = front(p) * (1 + FALL);
+
+    // Settled shadows first, so no petal is darkened by another's shadow
+    ctx.fillStyle = 'rgba(5, 3, 12, 0.32)';
+    for (const pt of petals) {
+      if (lead - pt.along < FALL) continue;
+      ctx.beginPath();
+      ctx.ellipse(pt.x + 1.5 * pt.k, pt.y + 2 * pt.k, pt.size * pt.k * 1.1, pt.size * pt.k * 0.45, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    for (const pt of petals) {
+      const t = reducedMotion ? (lead >= pt.along ? 1 : 0) : clamp((lead - pt.along) / FALL);
+      if (t <= 0) continue;
+      const e = 1 - Math.pow(1 - t, 3);
+      const x = pt.x + (1 - e) * pt.drift;
+      const y = pt.y - (1 - e) * pt.height;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(pt.rot + (1 - e) * pt.spin);
+      // Tumbling in the air: the petal flips, and lies flat once it lands
+      const flip = t < 1 ? Math.cos((1 - e) * pt.flips * Math.PI * 2) : 1;
+      ctx.scale(pt.k, pt.k * (0.25 + 0.75 * Math.abs(flip)) * (t < 1 ? 1 : 0.72));
+      ctx.globalAlpha = Math.min(1, t * 3);
+      drawPetal(pt.size, pt.squash, pt.color, pt.shape);
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+
+    // Blooms pop open just after the petals around them land
+    for (const b of blooms) {
+      const t = reducedMotion ? (lead >= b.along + FALL ? 1 : 0) : clamp((lead - b.along - FALL * 0.6) / 0.03);
+      if (t <= 0) continue;
+      const pop = t < 1 ? 1 + Math.sin(t * Math.PI) * 0.25 : 1;
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.scale(b.k * pop * t, b.k * pop * t * 0.82);
+      drawBloom(13, b.seed, b.head);
+      ctx.restore();
+    }
+
+    // The soul: a small light that leaves the house and follows the path to the altar
+    const glow = clamp((p - OPEN * 0.6) / 0.05) * (1 - clamp((p - ARRIVE - 0.04) / 0.05));
+    if (glow > 0) {
+      const u = front(p);
+      ctx.globalCompositeOperation = 'lighter';
+      for (let i = 12; i >= 0; i--) {
+        const at = pointAt(u - i * 0.012);
+        const k = depth(at.y);
+        const wob = Math.sin(time * 0.003 + i) * 3;
+        const a = glow * (1 - i / 13) * 0.5;
+        const R = (i === 0 ? 26 : 10 - i * 0.5) * k;
+        const lift = 42 * k + Math.sin(time * 0.002) * 5;
+        const g = ctx.createRadialGradient(at.x, at.y - lift + wob, 0, at.x, at.y - lift + wob, R);
+        g.addColorStop(0, `rgba(255, 244, 214, ${a})`);
+        g.addColorStop(0.35, `rgba(255, 196, 110, ${a * 0.6})`);
+        g.addColorStop(1, 'rgba(255, 150, 60, 0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(at.x, at.y - lift + wob, R, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // Its light on the ground
+      const at = pointAt(u);
+      const g = ctx.createRadialGradient(at.x, at.y, 0, at.x, at.y, 90);
+      g.addColorStop(0, `rgba(255, 190, 100, ${glow * 0.28})`);
+      g.addColorStop(1, 'rgba(255, 190, 100, 0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.ellipse(at.x, at.y, 90, 34, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    // Copal smoke rises once the altar is lit
+    const smokeOn = clamp((p - ARRIVE) / 0.06);
+    if (smokeOn > 0) {
+      for (const s of smoke) {
+        const age = reducedMotion ? s.phase : (s.phase + time * 0.00012) % 1;
+        const y = 722 - age * 300;
+        const x = 1300 + Math.sin(age * 5 + s.wobble) * (8 + age * 40);
+        const size = (10 + age * 54) * s.size;
+        ctx.globalAlpha = smokeOn * (1 - age) * Math.min(1, age * 6) * 0.28;
+        ctx.drawImage(puff, x - size / 2, y - size / 2, size, size);
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // A light loop runs only while the scene is on screen: the smoke and the soul's shimmer move with time
+  let raf = 0;
+  let visible = false;
+  const loop = (time: number) => {
+    draw(time);
+    if (visible && !reducedMotion) raf = requestAnimationFrame(loop);
+  };
+  new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting;
+    cancelAnimationFrame(raf);
+    if (visible) raf = requestAnimationFrame(loop);
+  }).observe(scene);
+
+  measure();
+  onResize(() => {
+    measure();
+    draw(performance.now());
+  });
+  onProgress(scene, (value) => {
+    p = value;
+    scene.style.setProperty('--lit', String(clamp((p - ARRIVE) / 0.12)));
+    // Where the view is narrower than the field (phones), it follows the tip of the path
+    scene.style.setProperty('--pan', ((pointAt(front(p)).x - 300) / 1000).toFixed(4));
+    if (reducedMotion || !visible) draw(performance.now());
+  });
+</script>
+
+<style>
+  /* --lit is written by the script on the section, from the scene's progress */
+  .camino {
+    --lit: 0;
+    --pan: 0;
+  }
+  .stage {
+    background: #07051a;
+    --open: clamp(0, (var(--p) - 0.02) / 0.08, 1);
+  }
+
+  /* A 16:9 box that covers the stage; where it is wider than the screen (phones),
+     the view slides from the house to the altar as the path advances */
+  .world {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: max(100%, 100lvh * 16 / 9);
+    aspect-ratio: 16 / 9;
+    translate: 0 -50%;
+    transform: translateX(calc((100vw - 100%) * clamp(0, var(--pan), 1)));
+  }
+  .art,
+  .fx {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .part {
+    inset: auto;
+    overflow: visible;
+  }
+  .arch-layer {
+    will-change: transform;
+  }
+
+  /* Night life */
+  .stars circle {
+    fill: #fff;
+    animation: twinkle var(--d) ease-in-out var(--o) infinite alternate;
+  }
+  .town rect {
+    fill: #ffcf7a;
+    animation: twinkle var(--d) ease-in-out var(--o) infinite alternate;
+  }
+  @keyframes twinkle {
+    from { opacity: 0.25; }
+    to { opacity: 1; }
+  }
+
+  .pebbles ellipse {
+    fill: #05030c;
+  }
+  .agave path {
+    fill: #1d3a2c;
+    stroke: #2c5640;
+    stroke-width: 1;
+  }
+  .bricks path {
+    fill: #6e3524;
+    stroke: #4a2014;
+    stroke-width: 1;
+    opacity: 0.8;
+  }
+
+  /* The door swings inward on its left hinge; the house and the ground light up */
+  .leaf {
+    transform-box: fill-box;
+    transform-origin: 0 50%;
+    transform: scaleX(calc(1 - 0.82 * var(--open))) skewY(calc(var(--open) * -9deg));
+  }
+  .lit-in {
+    opacity: var(--open);
+  }
+  .spill {
+    opacity: var(--open);
+  }
+  .lantern-glass {
+    opacity: calc(0.25 + 0.75 * var(--open));
+  }
+  .lantern-glow {
+    opacity: var(--open);
+  }
+
+  .guide {
+    fill: none;
+    stroke: none;
+  }
+
+  /* Altar */
+  .flag {
+    transform-box: fill-box;
+    transform-origin: 50% 0;
+    animation: sway 3.2s ease-in-out infinite alternate;
+    animation-delay: calc(var(--i) * -0.45s);
+  }
+  @keyframes sway {
+    from { rotate: -5deg; }
+    to { rotate: 5deg; }
+  }
+  .veil {
+    opacity: calc(1 - var(--lit));
+  }
+  .backlight {
+    opacity: var(--lit);
+  }
+  .pool {
+    opacity: calc(var(--lit) * 0.9);
+  }
+  .embers {
+    opacity: calc(0.35 + 0.65 * var(--lit));
+  }
+
+  .candle {
+    --on: clamp(0, (var(--p) - var(--at)) * 40, 1);
+  }
+  .flame,
+  .halo {
+    opacity: var(--on);
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+  }
+  .flame {
+    scale: var(--on);
+    animation: flicker 1.4s ease-in-out infinite alternate;
+    animation-delay: calc(var(--i) * -0.31s);
+  }
+  .halo {
+    transform-origin: center;
+    mix-blend-mode: screen;
+    animation: breathe 2.2s ease-in-out infinite alternate;
+    animation-delay: calc(var(--i) * -0.5s);
+  }
+  @keyframes flicker {
+    0% { transform: scaleY(1) skewX(0deg); }
+    35% { transform: scaleY(1.14) skewX(3deg); }
+    70% { transform: scaleY(0.9) skewX(-3deg); }
+    100% { transform: scaleY(1.06) skewX(1deg); }
+  }
+  @keyframes breathe {
+    from { transform: scale(0.92); }
+    to { transform: scale(1.08); }
+  }
+
+  /* Captions sit in the sky, top left, clear of the path */
+  .captions {
+    position: absolute;
+    left: var(--gutter);
+    top: 96px;
+    z-index: 1;
+    list-style: none;
+    padding: 0;
+    max-width: 480px;
+  }
+  .captions .mono {
+    color: var(--accent);
+  }
+  .captions .source {
+    margin-top: 16px;
+    color: var(--fg-dim);
+  }
+  h2 {
+    margin-top: 12px;
+    font-size: var(--t-4xl);
+    line-height: 40px;
+    text-shadow: 0 2px 16px rgb(7 5 26 / 0.8);
+  }
+  .text {
+    margin-top: 12px;
+    font-size: var(--t-xl);
+    line-height: 28px;
+    font-weight: 300;
+    text-shadow: 0 1px 12px rgb(7 5 26 / 0.9);
+  }
+
+  @media (max-width: 767px) {
+    h2 {
+      font-size: var(--t-2xl);
+      line-height: 32px;
+    }
+    .text {
+      font-size: var(--t-base);
+      line-height: 24px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stars circle,
+    .town rect,
+    .flag,
+    .flame,
+    .halo {
+      animation: none;
+    }
+  }
+</style>

@@ -1,0 +1,279 @@
+---
+/**
+ * The altar, level by level. One painting of the whole altar, upscaled to 4K,
+ * and a camera that zooms between four regions of it as you scroll. Every view
+ * is the same pixels, so the flights have no seams to hide.
+ */
+
+// The light copy (already loaded by the opening) shows first; the 4K one takes over when ready
+const IMAGE = { src: '/images/altar-general.webp', hd: '/images/altar-general-4k.webp' };
+
+const views = [
+  {
+    rect: [0, 0, 1],
+    rectMobile: [0, 0, 1],
+    label: 'La ofrenda',
+    title: 'Un altar para recibirlos',
+    text: 'Unos días antes del 1 de noviembre, muchas casas levantan su ofrenda para que esté lista cuando lleguen las ánimas. Es una de las costumbres más extendidas de la fiesta.',
+  },
+  {
+    rect: [0.17, 0.55, 0.45],
+    rectMobile: [0.21, 0.64, 0.36],
+    label: 'Flores, velas y copal',
+    title: 'Luz y aroma para encontrar el camino',
+    text: 'Las veladoras guían a las ánimas hasta la ofrenda. El cempasúchil marca el camino desde la entrada de la casa, y el incienso y el copal aromatizan y alejan a los malos espíritus.',
+  },
+  {
+    rect: [0.36, 0.48, 0.36],
+    rectMobile: [0.36, 0.54, 0.36],
+    label: 'Comida y agua',
+    title: 'Para el hambre y la sed del viaje',
+    text: 'Se sirve comida y agua para saciar el hambre y la sed que traen las ánimas después de su largo recorrido. No faltan el pan de muerto ni las calaveritas de azúcar.',
+  },
+  {
+    rect: [0.15, 0.02, 0.62],
+    rectMobile: [0.24, 0.17, 0.62],
+    label: 'Retratos y papel picado',
+    title: 'Sus rostros, en lo más alto',
+    text: 'El retrato dice a quién se honra. El papel picado da color y representa el viento. Se suman objetos que la persona quería; para los niños, sus juguetes favoritos.',
+  },
+];
+
+// Scroll weights: each view holds for HOLD, each flight takes FLY
+const HOLD = 1;
+const FLY = 1.4;
+const total = views.length * HOLD + (views.length - 1) * FLY;
+const segments: { kind: 'hold' | 'fly'; i: number; from: number; to: number }[] = [];
+let at = 0;
+views.forEach((_, i) => {
+  segments.push({ kind: 'hold', i, from: at / total, to: (at + HOLD) / total });
+  at += HOLD;
+  if (i < views.length - 1) {
+    segments.push({ kind: 'fly', i, from: at / total, to: (at + FLY) / total });
+    at += FLY;
+  }
+});
+
+const holds = segments.filter((s) => s.kind === 'hold');
+// Captions: on through their hold, off as the next flight starts. The last one stays.
+const beat = (i: number) => {
+  const h = holds[i];
+  const from = i === 0 ? 0 : h.from - 0.02;
+  return i === views.length - 1 ? from.toFixed(3) : `${from.toFixed(3)} ${(h.to + 0.03).toFixed(3)}`;
+};
+---
+
+<section
+  class="scene ofrenda"
+  id="ofrenda"
+  data-scene="ofrenda"
+  data-theme="noche"
+  data-chapter="ofrenda"
+  data-segments={JSON.stringify(segments)}
+  data-rects={JSON.stringify(views.map((v) => v.rect))}
+  data-rects-mobile={JSON.stringify(views.map((v) => v.rectMobile))}
+  style="--len: 900"
+>
+  <div class="stage">
+    <div class="views" aria-hidden="true" data-camera>
+      <img class="view" src={IMAGE.src} alt="" decoding="async" />
+      <img class="view hd" data-hd={IMAGE.hd} alt="" decoding="async" />
+    </div>
+
+    <ol class="captions stack">
+      {
+        views.map((v, i) => (
+          <li class="beat caption" data-beat={beat(i)}>
+            <p class="mono count">
+              {String(i + 1).padStart(2, '0')} / {String(views.length).padStart(2, '0')} · {v.label}
+            </p>
+            <h2>{v.title}</h2>
+            <p class="text">{v.text}</p>
+            {i === views.length - 1 && <p class="mono source">Fuente: INAH, «Ofrendas para los muertos»</p>}
+          </li>
+        ))
+      }
+    </ol>
+
+    <ol class="rail" aria-hidden="true">
+      {holds.map((h) => <li style={`--at: ${h.from.toFixed(3)}`} />)}
+    </ol>
+  </div>
+</section>
+
+<script>
+  import { $ } from '../../scripts/dom';
+  import { clamp, onProgress } from '../../scripts/scenes';
+
+  type Segment = { kind: 'hold' | 'fly'; i: number; from: number; to: number };
+  type Rect = [number, number, number];
+
+  const scene = $('[data-scene="ofrenda"]')!;
+  const segments: Segment[] = JSON.parse(scene.dataset.segments ?? '[]');
+  // Phones see a narrow vertical slice with the caption over its lower half,
+  // so each view has its own framing with the subject centered above the caption
+  const desktopRects: Rect[] = JSON.parse(scene.dataset.rects ?? '[]');
+  const mobileRects: Rect[] = JSON.parse(scene.dataset.rectsMobile ?? '[]');
+  const phone = window.matchMedia('(max-width: 767px)');
+  const camera = $('[data-camera]', scene)!;
+  const hd = $<HTMLImageElement>('[data-hd]', scene)!;
+
+  // Swap in the 4K painting once it has loaded and decoded
+  const load = () => {
+    if (hd.src) return;
+    hd.src = hd.dataset.hd!;
+    hd.decode().then(() => hd.classList.add('is-ready')).catch(() => {});
+  };
+  if (document.readyState === 'complete') load();
+  else window.addEventListener('load', load, { once: true });
+
+  let shown = '';
+  function update(p: number) {
+    const seg = segments.find((s) => p >= s.from && p <= s.to) ?? segments[segments.length - 1];
+    const t = seg.kind === 'hold' ? 0 : clamp((p - seg.from) / (seg.to - seg.from));
+    const rects = phone.matches ? mobileRects : desktopRects;
+    const a = rects[seg.i];
+    const b = rects[seg.kind === 'fly' ? seg.i + 1 : seg.i];
+
+    // Zoom at a constant rate: width changes geometrically, position follows the same curve
+    const e = t * t * (3 - 2 * t);
+    const w = a[2] ** (1 - e) * b[2] ** e;
+    const k = Math.abs(b[2] - a[2]) < 1e-6 ? e : (w - a[2]) / (b[2] - a[2]);
+    const x = a[0] + (b[0] - a[0]) * k;
+    const y = a[1] + (b[1] - a[1]) * k;
+
+    // The painting fills the stage like object-fit: cover; the camera rect is scaled up to it
+    const css = `scale(${(1 / w).toFixed(5)}) translate(${(-x * 100).toFixed(4)}%, ${(-y * 100).toFixed(4)}%)`;
+    if (css === shown) return;
+    shown = css;
+    camera.style.transform = css;
+  }
+
+  let last = 0;
+  phone.addEventListener('change', () => {
+    shown = '';
+    update(last);
+  });
+  onProgress(scene, (p) => update((last = p)));
+</script>
+
+<style>
+  /* Overlaps the opening by one screen: its stage is already pinned on the same
+     frame underneath, so the opening leaves without revealing a second altar */
+  .ofrenda {
+    z-index: 1;
+    margin-top: -100vh;
+    margin-top: -100lvh;
+  }
+
+  .stage {
+    background: var(--noche);
+  }
+
+  /* The camera: a 16:9 box that covers the stage, scaled from its top left corner */
+  .views {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 100lvh * 1669 / 942);
+    aspect-ratio: 1669 / 942;
+    translate: -50% -50%;
+    transform-origin: 0 0;
+    will-change: transform;
+  }
+
+  .view {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .hd {
+    opacity: 0;
+    transition: opacity 600ms var(--ease);
+  }
+  .hd.is-ready {
+    opacity: 1;
+  }
+
+  .captions {
+    position: absolute;
+    left: var(--gutter);
+    bottom: calc(64px + var(--chrome));
+    z-index: 2;
+    width: min(calc(100% - 2 * var(--gutter)), 464px);
+    list-style: none;
+    padding: 0;
+  }
+
+  .caption {
+    padding: 32px;
+    border-radius: 24px;
+    background: rgb(16 12 31 / 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: inset 0 0 0 1px rgb(243 236 224 / 0.1);
+  }
+
+  .count {
+    color: var(--cempasuchil);
+  }
+
+  h2 {
+    margin-top: 12px;
+    font-size: var(--t-4xl);
+    line-height: 40px;
+  }
+
+  .text {
+    margin-top: 16px;
+    font-size: var(--t-base);
+    line-height: 24px;
+    color: color-mix(in srgb, var(--cera) 85%, transparent);
+  }
+
+  .source {
+    margin-top: 16px;
+    color: var(--humo);
+  }
+
+  /* Four marks that fill as the camera reaches each level */
+  .rail {
+    position: absolute;
+    right: var(--gutter);
+    top: 50%;
+    z-index: 2;
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    transform: translateY(-50%);
+  }
+  .rail li {
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    box-shadow: inset 0 0 0 1px var(--cera);
+    background: var(--cera);
+    opacity: calc(0.35 + 0.65 * clamp(0, calc((var(--p) - var(--at)) * 400), 1));
+    transform: scale(calc(0.75 + 0.25 * clamp(0, calc((var(--p) - var(--at)) * 400), 1)));
+    transition: opacity 400ms var(--ease), transform 400ms var(--ease);
+  }
+
+  @media (max-width: 767px) {
+    .captions {
+      bottom: calc(24px + var(--chrome));
+    }
+    .caption {
+      padding: 24px;
+    }
+    h2 {
+      font-size: var(--t-3xl);
+      line-height: 36px;
+    }
+    .rail {
+      display: none;
+    }
+  }
+</style>

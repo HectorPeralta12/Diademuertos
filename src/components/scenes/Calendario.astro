@@ -1,0 +1,216 @@
+---
+/**
+ * Before November: a year drawn as a ring. The Mexica feasts for the dead
+ * light up where INAH places them, and then the two Catholic dates that the
+ * celebration keeps today. The arcs draw themselves from the scene's --p.
+ */
+
+const C = 200;
+const months = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+const angle = (m: number) => (m / 12) * Math.PI * 2 - Math.PI / 2;
+const point = (m: number, r: number) => [C + r * Math.cos(angle(m)), C + r * Math.sin(angle(m))].map((n) => n.toFixed(2));
+const arc = (from: number, to: number, r: number) => {
+  const [x1, y1] = point(from, r);
+  const [x2, y2] = point(to, r);
+  const large = to - from > 6 ? 1 : 0;
+  return `M${x1} ${y1}A${r} ${r} 0 ${large} 1 ${x2} ${y2}`;
+};
+
+const feasts = [
+  {
+    name: 'Miccailhuitontli',
+    when: 'Agosto y septiembre',
+    text: 'La fiesta menor de los muertos, dedicada a los niños que morían.',
+    from: 7.05, to: 8.95, r: 168,
+  },
+  {
+    name: 'Huey Miccailhuitl',
+    when: 'Agosto y septiembre',
+    text: 'La fiesta mayor, para los guerreros muertos que moraban en la casa del Sol.',
+    from: 7.05, to: 8.95, r: 148,
+  },
+  {
+    name: 'Tepeilhuitl',
+    when: 'Octubre y noviembre',
+    text: 'Dedicada a los cerros y a las deidades del agua. Se hacían imágenes de quienes morían ahogados o por enfermedades ligadas al agua.',
+    from: 9.05, to: 10.95, r: 168,
+  },
+  {
+    name: 'Tititl',
+    when: 'Desde el solsticio de invierno',
+    text: 'Cerraba el año solar. Se hacían imágenes de quienes tuvieron muerte natural, cuyo destino era el Mictlan, y luego se quemaban.',
+    from: 11.3, to: 12.95, r: 168,
+  },
+];
+
+const INTRO = 0.12;
+const step = (0.82 - INTRO) / feasts.length;
+const at = feasts.map((_, i) => INTRO + i * step);
+const CATHOLIC = 0.82;
+const [nx, ny] = point(10 + 1.5 / 30, 186);
+const [lx, ly] = point(10 + 1.5 / 30, 214);
+---
+
+<section class="scene calendario" data-scene="calendario" data-theme="copal" data-chapter="historia" style="--len: 620">
+  <div class="stage">
+    <svg class="ring" viewBox="0 0 400 400" aria-hidden="true">
+      <circle cx={C} cy={C} r="128" class="track" />
+      {
+        months.map((m, i) => {
+          const [x, y] = point(i + 0.5, 112);
+          const [tx1, ty1] = point(i, 122);
+          const [tx2, ty2] = point(i, 134);
+          return (
+            <g>
+              <line x1={tx1} y1={ty1} x2={tx2} y2={ty2} class="tick" />
+              <text x={x} y={y} class="month">{m}</text>
+            </g>
+          );
+        })
+      }
+      {
+        feasts.map((f, i) => (
+          <path d={arc(f.from, f.to, f.r)} pathLength="1" class="arc" style={`--at: ${at[i].toFixed(3)}`} />
+        ))
+      }
+      <g class="nov" style={`--at: ${CATHOLIC}`}>
+        <circle cx={nx} cy={ny} r="7" />
+        <text x={lx} y={ly} class="nov-label">1–2 NOV</text>
+      </g>
+    </svg>
+
+    <ol class="captions stack">
+      <li class="beat" data-beat={`0 ${INTRO.toFixed(3)}`}>
+        <p class="mono">Antes de noviembre</p>
+        <h2>Los mexicas recordaban a sus muertos en otras fechas</h2>
+        <p class="text">Su calendario solar de 365 días se dividía en 18 veintenas. Varias estaban dedicadas a los difuntos, según cómo habían muerto.</p>
+      </li>
+      {
+        feasts.map((f, i) => (
+          <li class="beat" data-beat={`${at[i].toFixed(3)} ${(i === feasts.length - 1 ? CATHOLIC : at[i + 1]).toFixed(3)}`}>
+            <p class="mono">{f.when}</p>
+            <h2>{f.name}</h2>
+            <p class="text">{f.text}</p>
+          </li>
+        ))
+      }
+      <li class="beat" data-beat={CATHOLIC.toFixed(3)} data-theme="morado">
+        <p class="mono">1 y 2 de noviembre</p>
+        <h2>Las fechas de hoy vienen de otro calendario</h2>
+        <p class="text">Para el arqueólogo Víctor Joel Santos Ramírez, del INAH, estas veintenas no dieron origen al Día de Muertos novohispano: sus fechas llegaron con la Iglesia católica.</p>
+        <p class="mono source">Fuente: INAH, «El origen del Día de Muertos» (2023)</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<style>
+  .stage {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    align-items: center;
+    gap: 48px;
+    padding: 96px var(--gutter) calc(64px + var(--chrome));
+  }
+
+  .captions {
+    list-style: none;
+    padding: 0;
+    max-width: 460px;
+  }
+  .captions .mono {
+    color: var(--accent);
+  }
+  .captions .source {
+    margin-top: 24px;
+    color: var(--fg-dim);
+  }
+
+  h2 {
+    margin-top: 12px;
+    font-size: var(--t-4xl);
+    line-height: 40px;
+  }
+
+  .text {
+    margin-top: 16px;
+    font-size: var(--t-lg);
+    line-height: 28px;
+    font-weight: 300;
+  }
+
+  .ring {
+    width: 100%;
+    max-height: 76vh;
+    overflow: visible;
+    transform: rotate(calc(var(--p) * -10deg));
+  }
+
+  .track {
+    fill: none;
+    stroke: var(--fg);
+    stroke-opacity: 0.2;
+  }
+  .tick {
+    stroke: var(--fg);
+    stroke-opacity: 0.45;
+  }
+  .month {
+    fill: var(--fg-dim);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-anchor: middle;
+    dominant-baseline: middle;
+  }
+
+  /* Each arc draws itself as the progress reaches its feast */
+  .arc {
+    fill: none;
+    stroke: var(--cempasuchil);
+    stroke-width: 12;
+    stroke-linecap: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: calc(1 - clamp(0, (var(--p) - var(--at)) / 0.06, 1));
+  }
+
+  .nov {
+    opacity: clamp(0, calc((var(--p) - var(--at)) / 0.03), 1);
+    transition: fill 900ms var(--ease);
+  }
+  .nov circle {
+    fill: #ffffff;
+  }
+  .nov-label {
+    fill: var(--fg);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-anchor: middle;
+    dominant-baseline: middle;
+  }
+
+  @media (max-width: 899px) {
+    .stage {
+      grid-template-columns: 1fr;
+      grid-template-rows: minmax(0, 1fr) auto;
+      gap: 24px;
+      padding-top: 80px;
+    }
+    .ring {
+      grid-row: 1;
+      height: 100%;
+      max-height: none;
+    }
+    .captions {
+      grid-row: 2;
+    }
+    h2 {
+      font-size: var(--t-2xl);
+      line-height: 32px;
+    }
+    .text {
+      font-size: var(--t-base);
+      line-height: 24px;
+    }
+  }
+</style>

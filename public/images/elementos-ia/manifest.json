@@ -1,0 +1,86 @@
+[
+  {
+    "file": "retratos-360.webp",
+    "width": 360,
+    "height": 450,
+    "bytes": 32114
+  },
+  {
+    "file": "retratos.webp",
+    "width": 720,
+    "height": 900,
+    "bytes": 96018
+  },
+  {
+    "file": "veladoras-360.webp",
+    "width": 360,
+    "height": 450,
+    "bytes": 23588
+  },
+  {
+    "file": "veladoras.webp",
+    "width": 720,
+    "height": 900,
+    "bytes": 55282
+  },
+  {
+    "file": "pan-de-muerto-360.webp",
+    "width": 360,
+    "height": 450,
+    "bytes": 39494
+  },
+  {
+    "file": "pan-de-muerto.webp",
+    "width": 720,
+    "height": 900,
+    "bytes": 111240
+  },
+  {
+    "file": "cempasuchil-360.webp",
+    "width": 360,
+    "height": 450,
+    "bytes": 34368
+  },
+  {
+    "file": "cempasuchil.webp",
+    "width": 720,
+    "height": 900,
+    "bytes": 95860
+  },
+  {
+    "file": "copal-360.webp",
+    "width": 360,
+    "height": 450,
+    "bytes": 26410
+  },
+  {
+    "file": "copal.webp",
+    "width": 720,
+    "height": 900,
+    "bytes": 79250
+  },
+  {
+    "file": "papel-picado-360.webp",
+    "width": 360,
+    "height": 450,
+    "bytes": 41218
+  },
+  {
+    "file": "papel-picado.webp",
+    "width": 720,
+    "height": 900,
+    "bytes": 111486
+  },
+  {
+    "file": "calaverita-360.webp",
+    "width": 360,
+    "height": 450,
+    "bytes": 37832
+  },
+  {
+    "file": "calaverita.webp",
+    "width": 720,
+    "height": 900,
+    "bytes": 103496
+  }
+]

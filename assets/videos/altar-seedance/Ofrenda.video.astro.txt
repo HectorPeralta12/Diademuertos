@@ -1,0 +1,267 @@
+---
+/**
+ * The altar, level by level. Scroll scrubs a camera between four views:
+ * each view holds as a still while its caption reads, then a pre-rendered
+ * transition clip flies to the next one. Clip endpoints match the stills,
+ * so holds and flights hand off without a cut.
+ */
+
+const views = [
+  {
+    still: '/images/altar-general.webp',
+    label: 'La ofrenda',
+    title: 'Un altar para recibirlos',
+    text: 'Unos días antes del 1 de noviembre, muchas casas levantan su ofrenda para que esté lista cuando lleguen las ánimas. Es una de las costumbres más extendidas de la fiesta.',
+  },
+  {
+    still: '/images/altar-flores-velas-copal.webp',
+    label: 'Flores, velas y copal',
+    title: 'Luz y aroma para encontrar el camino',
+    text: 'Las veladoras guían a las ánimas hasta la ofrenda. El cempasúchil marca el camino desde la entrada de la casa, y el incienso y el copal aromatizan y alejan a los malos espíritus.',
+  },
+  {
+    still: '/images/altar-comida-agua.webp',
+    label: 'Comida y agua',
+    title: 'Para el hambre y la sed del viaje',
+    text: 'Se sirve comida y agua para saciar el hambre y la sed que traen las ánimas después de su largo recorrido. No faltan el pan de muerto ni las calaveritas de azúcar.',
+  },
+  {
+    still: '/images/altar-retratos-papel-picado.webp',
+    label: 'Retratos y papel picado',
+    title: 'Sus rostros, en lo más alto',
+    text: 'El retrato dice a quién se honra. El papel picado da color y representa el viento. Se suman objetos que la persona quería; para los niños, sus juguetes favoritos.',
+  },
+];
+
+const clips = [
+  '/videos/altar-general-a-flores.mp4',
+  '/videos/altar-flores-a-comida.mp4',
+  '/videos/altar-comida-a-retratos.mp4',
+];
+
+// Scroll weights: each view holds for HOLD, each flight takes FLY
+const HOLD = 1;
+const FLY = 1.4;
+const total = views.length * HOLD + clips.length * FLY;
+const segments: { kind: 'hold' | 'fly'; i: number; from: number; to: number }[] = [];
+let at = 0;
+views.forEach((_, i) => {
+  segments.push({ kind: 'hold', i, from: at / total, to: (at + HOLD) / total });
+  at += HOLD;
+  if (i < clips.length) {
+    segments.push({ kind: 'fly', i, from: at / total, to: (at + FLY) / total });
+    at += FLY;
+  }
+});
+
+const holds = segments.filter((s) => s.kind === 'hold');
+// Captions: on through their hold, off as the next flight starts. The last one stays.
+const beat = (i: number) => {
+  const h = holds[i];
+  const from = i === 0 ? 0 : h.from - 0.02;
+  return i === views.length - 1 ? from.toFixed(3) : `${from.toFixed(3)} ${(h.to + 0.03).toFixed(3)}`;
+};
+---
+
+<section
+  class="scene ofrenda"
+  id="ofrenda"
+  data-scene="ofrenda"
+  data-theme="noche"
+  data-chapter="ofrenda"
+  data-segments={JSON.stringify(segments)}
+  style="--len: 900"
+>
+  <div class="stage">
+    <div class="views" aria-hidden="true">
+      {views.map((v, i) => <img class={i === 0 ? "view is-on" : "view"} src={v.still} alt="" data-view={i} decoding="async" />)}
+      {clips.map((src, i) => <video class="clip" data-clip={i} data-src={src} muted playsinline preload="none" />)}
+    </div>
+
+    <ol class="captions stack">
+      {
+        views.map((v, i) => (
+          <li class="beat caption" data-beat={beat(i)}>
+            <p class="mono count">
+              {String(i + 1).padStart(2, '0')} / {String(views.length).padStart(2, '0')} · {v.label}
+            </p>
+            <h2>{v.title}</h2>
+            <p class="text">{v.text}</p>
+            {i === views.length - 1 && <p class="mono source">Fuente: INAH, «Ofrendas para los muertos»</p>}
+          </li>
+        ))
+      }
+    </ol>
+
+    <ol class="rail" aria-hidden="true">
+      {holds.map((h) => <li style={`--at: ${h.from.toFixed(3)}`} />)}
+    </ol>
+  </div>
+</section>
+
+<script>
+  import { $, $$ } from '../../scripts/dom';
+  import { clamp, onProgress, reducedMotion } from '../../scripts/scenes';
+  import { scrub } from '../../scripts/scrub';
+
+  type Segment = { kind: 'hold' | 'fly'; i: number; from: number; to: number };
+
+  const scene = $('[data-scene="ofrenda"]')!;
+  const segments: Segment[] = JSON.parse(scene.dataset.segments ?? '[]');
+  const flights = segments.filter((s) => s.kind === 'fly');
+  const views = $$<HTMLImageElement>('[data-view]', scene);
+  const videos = $$<HTMLVideoElement>('[data-clip]', scene);
+  let last = 0;
+  const clips = videos.map((el) => scrub(el, el.dataset.src!, () => update(last)));
+
+  let active = -1;
+  let flying = -1;
+
+  function update(p: number) {
+    last = p;
+    const seg = segments.find((s) => p >= s.from && p <= s.to) ?? segments[segments.length - 1];
+    const local = clamp((p - seg.from) / (seg.to - seg.from));
+
+    // Fetch the clips around the camera
+    clips.forEach((clip, i) => {
+      if (Math.abs(i - seg.i) <= 1) clip.load();
+    });
+
+    const view = seg.kind === 'hold' ? seg.i : local < 0.5 ? seg.i : seg.i + 1;
+    if (view !== active) {
+      active = view;
+      views.forEach((img, i) => img.classList.toggle('is-on', i === view));
+    }
+
+    const fly = seg.kind === 'fly' && clips[seg.i].ready && !reducedMotion ? seg.i : -1;
+    if (fly !== flying) {
+      flying = fly;
+      videos.forEach((el, i) => el.classList.toggle('is-on', i === fly));
+    }
+
+    clips.forEach((clip, i) => {
+      const f = flights[i];
+      clip.seek((p - f.from) / (f.to - f.from));
+    });
+  }
+
+  onProgress(scene, update);
+</script>
+
+<style>
+  /* Overlaps the opening by one screen: its stage is already pinned on the same
+     frame underneath, so the opening leaves without revealing a second altar */
+  .ofrenda {
+    z-index: 1;
+    margin-top: -100vh;
+    margin-top: -100lvh;
+  }
+
+  .stage {
+    background: var(--noche);
+  }
+
+  .views,
+  .view,
+  .clip {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .view,
+  .clip {
+    opacity: 0;
+    transition: opacity 240ms var(--ease);
+  }
+  .view.is-on,
+  .clip.is-on {
+    opacity: 1;
+  }
+  .clip {
+    z-index: 1;
+  }
+
+  .captions {
+    position: absolute;
+    left: var(--gutter);
+    bottom: calc(64px + var(--chrome));
+    z-index: 2;
+    width: min(calc(100% - 2 * var(--gutter)), 464px);
+    list-style: none;
+    padding: 0;
+  }
+
+  .caption {
+    padding: 32px;
+    border-radius: 24px;
+    background: rgb(16 12 31 / 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: inset 0 0 0 1px rgb(243 236 224 / 0.1);
+  }
+
+  .count {
+    color: var(--cempasuchil);
+  }
+
+  h2 {
+    margin-top: 12px;
+    font-size: var(--t-4xl);
+    line-height: 40px;
+  }
+
+  .text {
+    margin-top: 16px;
+    font-size: var(--t-base);
+    line-height: 24px;
+    color: color-mix(in srgb, var(--cera) 85%, transparent);
+  }
+
+  .source {
+    margin-top: 16px;
+    color: var(--humo);
+  }
+
+  /* Four marks that fill as the camera reaches each level */
+  .rail {
+    position: absolute;
+    right: var(--gutter);
+    top: 50%;
+    z-index: 2;
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    transform: translateY(-50%);
+  }
+  .rail li {
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    box-shadow: inset 0 0 0 1px var(--cera);
+    background: var(--cera);
+    opacity: calc(0.35 + 0.65 * clamp(0, calc((var(--p) - var(--at)) * 400), 1));
+    transform: scale(calc(0.75 + 0.25 * clamp(0, calc((var(--p) - var(--at)) * 400), 1)));
+    transition: opacity 400ms var(--ease), transform 400ms var(--ease);
+  }
+
+  @media (max-width: 767px) {
+    .captions {
+      bottom: calc(24px + var(--chrome));
+    }
+    .caption {
+      padding: 24px;
+    }
+    h2 {
+      font-size: var(--t-3xl);
+      line-height: 36px;
+    }
+    .rail {
+      display: none;
+    }
+  }
+</style>

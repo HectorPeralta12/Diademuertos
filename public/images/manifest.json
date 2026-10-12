@@ -1,0 +1,42 @@
+[
+  {
+    "source": "assets/xolo/hero-pictorico-v1.png",
+    "url": "/images/xolo-hero.webp",
+    "width": 1672,
+    "height": 941,
+    "originalBytes": 2544113,
+    "webpBytes": 354280
+  },
+  {
+    "source": "assets/altar/checkpoints-pictoricos-v2/00-vista-general.png",
+    "url": "/images/altar-general.webp",
+    "width": 1669,
+    "height": 942,
+    "originalBytes": 2583485,
+    "webpBytes": 353732
+  },
+  {
+    "source": "assets/altar/checkpoints-pictoricos-v2/01-flores-velas-copal.png",
+    "url": "/images/altar-flores-velas-copal.webp",
+    "width": 1672,
+    "height": 941,
+    "originalBytes": 2252255,
+    "webpBytes": 290494
+  },
+  {
+    "source": "assets/altar/checkpoints-pictoricos-v2/02-comida-agua.png",
+    "url": "/images/altar-comida-agua.webp",
+    "width": 1672,
+    "height": 941,
+    "originalBytes": 2286213,
+    "webpBytes": 281174
+  },
+  {
+    "source": "assets/altar/checkpoints-pictoricos-v2/03-retratos-papel-picado.png",
+    "url": "/images/altar-retratos-papel-picado.webp",
+    "width": 1670,
+    "height": 942,
+    "originalBytes": 2373413,
+    "webpBytes": 315696
+  }
+]

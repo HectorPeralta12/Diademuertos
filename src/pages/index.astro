@@ -1,0 +1,32 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Inicio from '../components/scenes/Inicio.astro';
+import Ofrenda from '../components/scenes/Ofrenda.astro';
+import Lema from '../components/scenes/Lema.astro';
+import Elementos from '../components/scenes/Elementos.astro';
+import PapelPicado from '../components/scenes/PapelPicado.astro';
+import Camino from '../components/scenes/Camino.astro';
+import Calendario from '../components/scenes/Calendario.astro';
+import Historia from '../components/scenes/Historia.astro';
+import Preguntas from '../components/scenes/Preguntas.astro';
+import Cierre from '../components/scenes/Cierre.astro';
+---
+
+<Layout>
+  <main>
+    <Inicio />
+    <Ofrenda />
+    <Lema />
+    <Elementos />
+    <PapelPicado />
+    <Camino />
+    <Calendario />
+    <Historia />
+    <Preguntas />
+    <Cierre />
+  </main>
+</Layout>
+
+<script>
+  import '../scripts/scenes';
+</script>

@@ -1,0 +1,68 @@
+---
+/**
+ * Tagline: the words start muted and light up one by one, in reading order,
+ * as the scene scrolls. Driven only by --p, so it costs no JavaScript.
+ */
+const lines = ['Mientras alguien los recuerde,', 'siguen encontrando', 'el camino a casa.'];
+
+let n = 0;
+const words = lines.map((line) => line.split(' ').map((w) => ({ w, i: n++ })));
+const total = n;
+---
+
+<section class="scene lema" data-scene="lema" data-theme="cempasuchil" data-chapter="ofrenda" style={`--len: 240; --n: ${total}`}>
+  <div class="stage">
+    <p class="tagline">
+      {
+        words.map((line) => (
+          <span class="line">
+            {line.map(({ w, i }) => (
+              <span class="word" style={`--i: ${i}`}>
+                {w}{' '}
+              </span>
+            ))}
+          </span>
+        ))
+      }
+    </p>
+  </div>
+</section>
+
+<style>
+  .stage {
+    display: grid;
+    place-items: center;
+    padding: 0 var(--gutter);
+  }
+
+  .tagline {
+    max-width: 880px;
+    font-size: var(--t-5xl);
+    line-height: 1.05;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    text-align: center;
+  }
+
+  .line {
+    display: block;
+  }
+
+  /* Each word turns on as the progress passes its place in the sentence */
+  .word {
+    --on: clamp(0, calc((var(--p) * 1.35 - 0.1) * var(--n) - var(--i)), 1);
+    opacity: calc(0.28 + 0.72 * var(--on));
+    transition: opacity 700ms var(--ease);
+  }
+
+  @media (min-width: 768px) {
+    .tagline {
+      font-size: var(--t-6xl);
+    }
+  }
+  @media (min-width: 1280px) {
+    .tagline {
+      font-size: var(--t-7xl);
+    }
+  }
+</style>

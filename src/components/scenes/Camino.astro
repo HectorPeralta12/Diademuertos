@@ -355,15 +355,6 @@ const pebbles = Array.from({ length: 90 }, () => {
           <clipPath id="cm-wallclip">
             <rect x="60" y="330" width="460" height="372" />
           </clipPath>
-          <mask id="cm-cut" maskContentUnits="objectBoundingBox">
-            <rect width="1" height="1" fill="white" />
-            <path fill="black" d="M-0.1 0.84 H0 Q0.083 0.76 0.166 0.84 T0.333 0.84 T0.5 0.84 T0.666 0.84 T0.833 0.84 T1 0.84 H1.1 V1.1 H-0.1Z" />
-            <circle cx="0.5" cy="0.42" r="0.12" fill="black" />
-            {[0, 1, 2, 3, 4, 5].map((k) => {
-              const a = (k / 6) * Math.PI * 2;
-              return <circle cx={f(0.5 + Math.cos(a) * 0.26)} cy={f(0.42 + Math.sin(a) * 0.22)} r="0.07" fill="black" />;
-            })}
-          </mask>
         </defs>
 
         <!-- The moon; the sky and its stars are the page's own (Layout) -->
@@ -377,9 +368,6 @@ const pebbles = Array.from({ length: 90 }, () => {
 
         <!-- Hills and the town far away -->
         <path d={hillsFar} fill="#262058" class="tinta" />
-        <g class="town">
-          {town.map((l) => <rect x={l.x} y={l.y} width={l.s} height={l.s} style={`--d: ${l.d}s; --o: ${l.o}s`} />)}
-        </g>
         <path d={hillsNear} fill="#1a1642" class="tinta" />
 
         <!-- Ground -->
@@ -425,57 +413,12 @@ const pebbles = Array.from({ length: 90 }, () => {
           <rect x="40" y="286" width="500" height="8" rx="3" fill="#8a3a22" />
           <rect x="40" y="330" width="500" height="5" fill="#000" opacity="0.45" />
 
-          <!-- Lantern by the door -->
-          <g class="lantern">
-            <path d="M200 476 h24 M212 476 v10" stroke="#1d1410" stroke-width="3" fill="none" />
-            <path d="M202 486 h20 l-3 34 h-14 z" fill="#2a1d16" />
-            <rect x="206" y="492" width="12" height="22" fill="#ffd27a" class="lantern-glass" />
-            <circle cx="212" cy="503" r="40" fill="url(#cm-glow)" class="lantern-glow" />
-          </g>
-
-          <!-- Window with iron bars; it lights up with the house -->
-          <g class="window">
-            <rect x="372" y="446" width="104" height="96" rx="4" fill="#cdb796" class="tinta" />
-            <rect x="380" y="454" width="88" height="80" fill="#130d22" />
-            <rect x="380" y="454" width="88" height="80" fill="url(#cm-inside)" class="lit-in" />
-            {[396, 412, 428, 444, 460].map((x) => <rect x={x - 2} y="454" width="4" height="80" fill="#1a1412" />)}
-            <rect x="380" y="490" width="88" height="4" fill="#1a1412" />
-            <rect x="366" y="540" width="116" height="10" rx="2" fill="#b9a585" />
-            <!-- Pot of marigolds on the sill -->
-            <path d="M414 518 q -6 -6 -10 -14 q 8 2 12 10 z M440 518 q 6 -6 12 -12 q -8 0 -14 8 z" fill="#2f5a2a" />
-            {sillPot.map((m) => <use href={m.v} x={m.x} y={m.y} width={m.r} height={m.r} transform={`rotate(${m.rot} ${m.x + m.r / 2} ${m.y + m.r / 2})`} />)}
-            <path d="M406 540 l3 -22 h30 l3 22 z" fill="url(#cm-clay)" />
-            <rect x="404" y="514" width="40" height="6" rx="2" fill="#a0532c" />
-          </g>
-
           <!-- Doorway: cantera frame, warm interior, and the wooden leaf that swings open -->
           <path d="M240 704 V 560 A 60 60 0 0 1 360 560 V 704 Z" fill="#c9b18e" class="tinta" />
           <path d="M240 704 V 560 A 60 60 0 0 1 360 560 V 704" fill="none" stroke="#e3d0ae" stroke-width="3" opacity="0.6" />
           <path d="M256 702 V 566 A 44 44 0 0 1 344 566 V 702 Z" fill="#120b10" />
-          <path d="M256 702 V 566 A 44 44 0 0 1 344 566 V 702 Z" fill="url(#cm-inside)" class="lit-in" />
-          <g class="leaf">
-            <path d="M256 702 V 566 A 44 44 0 0 1 344 566 V 702 Z" fill="url(#cm-wood)" />
-            {[278, 300, 322].map((x) => <path d={`M${x} 528 V 702`} stroke="#2a170d" stroke-width="2" />)}
-            {[590, 650].map((y) => <rect x="258" y={y} width="84" height="7" fill="#2a170d" opacity="0.7" />)}
-            {[268, 288, 312, 332].flatMap((x) => [594, 654].map((y) => <circle cx={x} cy={y + 3} r="2.4" fill="#c9a86a" />))}
-            <circle cx="334" cy="632" r="4" fill="none" stroke="#c9a86a" stroke-width="2" />
-          </g>
           <rect x="232" y="700" width="136" height="8" fill="#a9937a" />
         </g>
-
-        <!-- Papel picado from the corner of the roof to the arch -->
-        <path d={cordPath(skyCord)} fill="none" stroke="#d9c7a8" stroke-width="1.5" opacity="0.6" />
-        <circle cx={skyCord.a[0]} cy={skyCord.a[1]} r="2.5" fill="#2a1d16" />
-        {
-          skyFlags.map((fl) => (
-            <g transform={`translate(${fl.x} ${fl.y}) rotate(${fl.angle})`}>
-              <g class="flag" style={`--i: ${fl.i}`}>
-                <rect x="-15" y="-1.5" width="30" height="37.5" fill={fl.c} mask="url(#cm-cut)" opacity="0.92" />
-                <rect x="-15" y="-1.5" width="30" height="3" fill="#000" opacity="0.22" />
-              </g>
-            </g>
-          ))
-        }
 
         <!-- Low stone wall behind the path -->
         <g class="barda">
@@ -496,46 +439,13 @@ const pebbles = Array.from({ length: 90 }, () => {
               </g>
             ))
           }
-          {
-            votives.map((v, i) => (
-              <g class="candle votive" style={`--at: ${v.at}; --i: ${i + 3}`}>
-                <circle class="halo" cx={v.x} cy="612" r="46" fill="url(#cm-glow)" />
-                <rect x={v.x - 6} y="618" width="12" height="13" fill="#f6efe2" opacity="0.85" />
-                <path d={`M${v.x - 8} 612 L ${v.x - 7} 632 H ${v.x + 7} L ${v.x + 8} 612 Z`} fill="#f3ece0" opacity="0.26" />
-                <ellipse cx={v.x} cy="612" rx="8" ry="1.8" fill="none" stroke="#fbf5e8" stroke-width="0.8" opacity="0.5" />
-                <path d={`M${v.x} 618 q 0.5 -1.5 -0.4 -3`} stroke="#2a1d16" stroke-width="1" fill="none" stroke-linecap="round" />
-                <g class="flame">
-                  <path d={flame(v.x, 617, 16, 4.2)} fill="url(#cm-flame)" />
-                  <path d={flame(v.x, 616.5, 6, 1.6)} fill="#fffbe8" />
-                </g>
-              </g>
-            ))
-          }
         </g>
-
-        <!-- Light spilling from the door across the ground -->
-        <path class="spill" d="M262 706 L 338 706 L 700 900 L 20 900 Z" fill="url(#cm-spill)" filter="url(#cm-soft)" />
 
         <path d={PATH} class="guide" data-path />
 
         <!-- The altar -->
         <g class="altar">
-          <ellipse class="backlight" cx="1300" cy="520" rx="320" ry="300" fill="url(#cm-warm)" />
-          <ellipse class="pool" cx="1300" cy="770" rx="340" ry="70" fill="url(#cm-warm)" />
           <ellipse cx="1300" cy="744" rx="230" ry="16" fill="#000" opacity="0.45" />
-
-          <!-- Papel picado garland, tied to the shoulders of the arch -->
-          <path d={cordPath(altarCord)} fill="none" stroke="#d9c7a8" stroke-width="1.5" opacity="0.7" />
-          {
-            flags.map((fl) => (
-              <g transform={`translate(${fl.x} ${fl.y}) rotate(${fl.angle})`}>
-                <g class="flag" style={`--i: ${fl.i}`}>
-                  <rect x="-13" y="-1.5" width="26" height="33.5" fill={fl.c} mask="url(#cm-cut)" />
-                  <rect x="-13" y="-1.5" width="26" height="3" fill="#000" opacity="0.22" />
-                </g>
-              </g>
-            ))
-          }
 
           <!-- Tiers: purple cloth fronts with a papel picado trim, pale tops in perspective -->
           {
@@ -655,8 +565,119 @@ const pebbles = Array.from({ length: 90 }, () => {
             <path d="M1282 752 h36 l-6 -14 h-24 z" fill="url(#cm-clay)" />
             <path d="M1270 738 q 30 18 60 0 l -4 -12 h -52 z" fill="url(#cm-clay)" />
             <ellipse cx="1300" cy="726" rx="26" ry="6" fill="#2a1208" />
-            <ellipse cx="1300" cy="726" rx="16" ry="3.5" fill="#ff7a2a" class="embers" />
           </g>
+        </g>
+      </svg>
+
+      <!-- Light spilling from the door across the ground: blurred, so it gets its own
+           layer and is only repainted while the door opens -->
+      <svg class="art" viewBox={`${VB.x} ${VB.y} ${VB.w} ${VB.h}`} preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <path class="spill" d="M262 706 L 338 706 L 700 900 L 20 900 Z" fill="url(#cm-spill)" filter="url(#cm-soft)" />
+      </svg>
+
+      <!-- Everything that moves or lights up with the scroll lives here, apart from the
+           scenery: changing anything in an SVG repaints all of it, and the scenery
+           (house, wall, hills, altar, ink filters) is far too heavy to repaint every frame -->
+      <svg class="art vivo" viewBox={`${VB.x} ${VB.y} ${VB.w} ${VB.h}`} preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs>
+          <!-- The papel picado cut-out lives here, not with the baked scenery: a mask
+               inside a hidden SVG would hide everything it cuts -->
+          <mask id="cm-cut" maskContentUnits="objectBoundingBox">
+            <rect width="1" height="1" fill="white" />
+            <path fill="black" d="M-0.1 0.84 H0 Q0.083 0.76 0.166 0.84 T0.333 0.84 T0.5 0.84 T0.666 0.84 T0.833 0.84 T1 0.84 H1.1 V1.1 H-0.1Z" />
+            <circle cx="0.5" cy="0.42" r="0.12" fill="black" />
+            {[0, 1, 2, 3, 4, 5].map((k) => {
+              const a = (k / 6) * Math.PI * 2;
+              return <circle cx={f(0.5 + Math.cos(a) * 0.26)} cy={f(0.42 + Math.sin(a) * 0.22)} r="0.07" fill="black" />;
+            })}
+          </mask>
+          <!-- Town lights only show above the near hills -->
+          <clipPath id="cm-skyline">
+            <path d={hillsNear.replace('V 720 H 0 Z', 'V 0 H 0 Z')} />
+          </clipPath>
+        </defs>
+        <g clip-path="url(#cm-skyline)">
+        <g class="town">
+          {town.map((l) => <rect x={l.x} y={l.y} width={l.s} height={l.s} style={`--d: ${l.d}s; --o: ${l.o}s`} />)}
+        </g>
+        </g>
+        <g class="house-live">
+          <path d="M256 702 V 566 A 44 44 0 0 1 344 566 V 702 Z" fill="url(#cm-inside)" class="lit-in" />
+          <g class="leaf">
+            <path d="M256 702 V 566 A 44 44 0 0 1 344 566 V 702 Z" fill="url(#cm-wood)" />
+            {[278, 300, 322].map((x) => <path d={`M${x} 528 V 702`} stroke="#2a170d" stroke-width="2" />)}
+            {[590, 650].map((y) => <rect x="258" y={y} width="84" height="7" fill="#2a170d" opacity="0.7" />)}
+            {[268, 288, 312, 332].flatMap((x) => [594, 654].map((y) => <circle cx={x} cy={y + 3} r="2.4" fill="#c9a86a" />))}
+            <circle cx="334" cy="632" r="4" fill="none" stroke="#c9a86a" stroke-width="2" />
+          </g>
+          <!-- Window with iron bars; it lights up with the house -->
+          <g class="window">
+            <rect x="372" y="446" width="104" height="96" rx="4" fill="#cdb796" class="tinta" />
+            <rect x="380" y="454" width="88" height="80" fill="#130d22" />
+            <rect x="380" y="454" width="88" height="80" fill="url(#cm-inside)" class="lit-in" />
+            {[396, 412, 428, 444, 460].map((x) => <rect x={x - 2} y="454" width="4" height="80" fill="#1a1412" />)}
+            <rect x="380" y="490" width="88" height="4" fill="#1a1412" />
+            <rect x="366" y="540" width="116" height="10" rx="2" fill="#b9a585" />
+            <!-- Pot of marigolds on the sill -->
+            <path d="M414 518 q -6 -6 -10 -14 q 8 2 12 10 z M440 518 q 6 -6 12 -12 q -8 0 -14 8 z" fill="#2f5a2a" />
+            {sillPot.map((m) => <use href={m.v} x={m.x} y={m.y} width={m.r} height={m.r} transform={`rotate(${m.rot} ${m.x + m.r / 2} ${m.y + m.r / 2})`} />)}
+            <path d="M406 540 l3 -22 h30 l3 22 z" fill="url(#cm-clay)" />
+            <rect x="404" y="514" width="40" height="6" rx="2" fill="#a0532c" />
+          </g>
+          <!-- Lantern by the door -->
+          <g class="lantern">
+            <path d="M200 476 h24 M212 476 v10" stroke="#1d1410" stroke-width="3" fill="none" />
+            <path d="M202 486 h20 l-3 34 h-14 z" fill="#2a1d16" />
+            <rect x="206" y="492" width="12" height="22" fill="#ffd27a" class="lantern-glass" />
+            <circle cx="212" cy="503" r="40" fill="url(#cm-glow)" class="lantern-glow" />
+          </g>
+        </g>
+        <!-- Papel picado from the corner of the roof to the arch -->
+        <path d={cordPath(skyCord)} fill="none" stroke="#d9c7a8" stroke-width="1.5" opacity="0.6" />
+        <circle cx={skyCord.a[0]} cy={skyCord.a[1]} r="2.5" fill="#2a1d16" />
+        {
+          skyFlags.map((fl) => (
+            <g transform={`translate(${fl.x} ${fl.y}) rotate(${fl.angle})`}>
+              <g class="flag" style={`--i: ${fl.i}`}>
+                <rect x="-15" y="-1.5" width="30" height="37.5" fill={fl.c} mask="url(#cm-cut)" opacity="0.92" />
+                <rect x="-15" y="-1.5" width="30" height="3" fill="#000" opacity="0.22" />
+              </g>
+            </g>
+          ))
+        }
+        <g class="barda-live">
+          {
+            votives.map((v, i) => (
+              <g class="candle votive" style={`--at: ${v.at}; --i: ${i + 3}`}>
+                <circle class="halo" cx={v.x} cy="612" r="46" fill="url(#cm-glow)" />
+                <rect x={v.x - 6} y="618" width="12" height="13" fill="#f6efe2" opacity="0.85" />
+                <path d={`M${v.x - 8} 612 L ${v.x - 7} 632 H ${v.x + 7} L ${v.x + 8} 612 Z`} fill="#f3ece0" opacity="0.26" />
+                <ellipse cx={v.x} cy="612" rx="8" ry="1.8" fill="none" stroke="#fbf5e8" stroke-width="0.8" opacity="0.5" />
+                <path d={`M${v.x} 618 q 0.5 -1.5 -0.4 -3`} stroke="#2a1d16" stroke-width="1" fill="none" stroke-linecap="round" />
+                <g class="flame">
+                  <path d={flame(v.x, 617, 16, 4.2)} fill="url(#cm-flame)" />
+                  <path d={flame(v.x, 616.5, 6, 1.6)} fill="#fffbe8" />
+                </g>
+              </g>
+            ))
+          }
+        </g>
+        <g class="altar-live">
+          <ellipse class="backlight" cx="1300" cy="520" rx="320" ry="300" fill="url(#cm-warm)" />
+          <ellipse class="pool" cx="1300" cy="770" rx="340" ry="70" fill="url(#cm-warm)" />
+          <!-- Papel picado garland, tied to the shoulders of the arch -->
+          <path d={cordPath(altarCord)} fill="none" stroke="#d9c7a8" stroke-width="1.5" opacity="0.7" />
+          {
+            flags.map((fl) => (
+              <g transform={`translate(${fl.x} ${fl.y}) rotate(${fl.angle})`}>
+                <g class="flag" style={`--i: ${fl.i}`}>
+                  <rect x="-13" y="-1.5" width="26" height="33.5" fill={fl.c} mask="url(#cm-cut)" />
+                  <rect x="-13" y="-1.5" width="26" height="3" fill="#000" opacity="0.22" />
+                </g>
+              </g>
+            ))
+          }
+          <g><ellipse cx="1300" cy="726" rx="16" ry="3.5" fill="#ff7a2a" class="embers" /></g>
         </g>
       </svg>
 
@@ -725,6 +746,7 @@ const pebbles = Array.from({ length: 90 }, () => {
   import { clamp, onProgress, onResize, reducedMotion } from '../../scripts/scenes';
   import { EDGE, LOOSE_PETALS, PETAL_CREASE, marigold } from '../../scripts/marigold';
   import { polvo } from '../../scripts/polvo';
+  import { hornear } from '../../scripts/hornear';
 
   const scene = $('[data-scene="camino"]')!;
   const world = $('[data-world]', scene)!;
@@ -732,6 +754,8 @@ const pebbles = Array.from({ length: 90 }, () => {
   const dustCanvas = $<HTMLCanvasElement>('[data-polvo]', scene)!;
   const guide = $<SVGPathElement>('[data-path]', scene)!;
   const ctx = canvas.getContext('2d')!;
+  // The scenery never changes: bake it into a bitmap so scrolling does not redraw it
+  hornear($<SVGSVGElement>('.world > svg.art', scene)!);
 
   function random(seed: number) {
     return () => {
@@ -1083,6 +1107,7 @@ const pebbles = Array.from({ length: 90 }, () => {
     aspect-ratio: 16 / 9;
     translate: 0 -50%;
     transform: translateX(calc((100vw - 100%) * clamp(0, var(--pan), 1)));
+    will-change: transform;
   }
   .art,
   .fx {
@@ -1174,10 +1199,12 @@ const pebbles = Array.from({ length: 90 }, () => {
     opacity: calc(1 - var(--lit));
   }
   .backlight {
-    opacity: var(--lit);
+    opacity: calc(var(--lit) * 0.3);
+    mix-blend-mode: screen;
   }
   .pool {
-    opacity: calc(var(--lit) * 0.9);
+    opacity: calc(var(--lit) * 0.5);
+    mix-blend-mode: screen;
   }
   .embers {
     opacity: calc(0.35 + 0.65 * var(--lit));

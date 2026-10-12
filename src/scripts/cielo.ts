@@ -48,6 +48,8 @@ export function cielo(canvas: HTMLCanvasElement, still: boolean) {
   }
 
   function render(time: number) {
+    // Not laid out yet: nothing to draw, and the star wrap below would divide by zero
+    if (!w || !h) return;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);

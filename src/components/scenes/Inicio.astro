@@ -2,9 +2,9 @@
 /**
  * Opening: the Xolo keeps watch, its painting kept alive in code (stars,
  * falling petals, candles, a blink). As you scroll, the copy leaves and the
- * camera follows the Xolo's gaze up into the sky; cempasúchil blooms until it
- * covers the screen, then the flowers open and shed their petals, and behind
- * them the camera comes down onto the whole altar. The last frame is the first
+ * camera follows the Xolo's gaze up into the sky; a gust of cempasúchil blows
+ * in, the flowers open and shed their petals, and behind them the camera comes
+ * down onto the whole altar. The last frame is the first
  * view of the next scene, so the hand over is invisible. Both paintings stay
  * at full resolution all along.
  */
@@ -88,12 +88,14 @@ const ALTAR_TOP = { x: 0.548, y: 0.24 };
     // Up into the sky, following the Xolo's gaze
     const up = smooth(clamp(t / 0.5));
     stage.style.setProperty('--zoom', (1 + 1.6 * up * up).toFixed(4));
-    // The flowers cover the screen by 0.5; behind them the paintings change places
-    flores.draw(clamp((t - 0.24) / 0.3), clamp((t - 0.56) / 0.34));
-    stage.style.setProperty('--art', (1 - clamp((t - 0.5) / 0.04)).toFixed(3));
-    stage.style.setProperty('--altar', clamp((t - 0.5) / 0.04).toFixed(3));
+    // A gust of cempasúchil blows in; under a warm light the paintings change places,
+    // then the flowers open and shed their petals over the altar
+    const glow = Math.max(0, 1 - Math.abs(t - 0.52) / 0.12);
+    flores.draw(clamp((t - 0.22) / 0.32), clamp((t - 0.58) / 0.34), glow);
+    stage.style.setProperty('--art', (1 - clamp((t - 0.44) / 0.14)).toFixed(3));
+    stage.style.setProperty('--altar', clamp((t - 0.44) / 0.14).toFixed(3));
     // Down onto the whole altar while the flowers open
-    const down = smooth(clamp((t - 0.52) / 0.48));
+    const down = smooth(clamp((t - 0.46) / 0.54));
     stage.style.setProperty('--zoom-altar', (1 + 1.8 * (1 - down) * (1 - down)).toFixed(4));
   }
 

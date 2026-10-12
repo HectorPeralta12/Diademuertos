@@ -1,10 +1,12 @@
 /**
- * A wall of cempasúchil that blooms over the screen and then opens, shedding
- * its petals, to reveal what is behind. Driven by a single progress value, so
- * it plays backward when the visitor scrolls back.
+ * A gust of cempasúchil: a few loose flowers ride the wind into the frame with a
+ * swirl of petals, settle for a breath, then open and shed their petals outward
+ * to reveal what is behind. Driven by progress values, so it plays backward
+ * when the visitor scrolls back.
  *
- *  bloom 0 → 1: heads pop open from the center outward until they cover the screen
- *  open  0 → 1: from the center outward, each head lets go of its petals and fades
+ *  bloom 0 → 1: the gust blows in; flowers drift to their places, petals stream across
+ *  open  0 → 1: from the center outward, each flower lets go of its petals and fades
+ *  glow  0 → 1: a warm light that hides the hand over between two paintings
  *
  * The flowers and petals are the painted ones cut from the cempasúchil sheet
  * (scripts/cempasuchil-piezas.mjs); the code-drawn heads stand in until they load.
@@ -66,7 +68,8 @@ function sprites(size: number) {
   );
 }
 
-interface Head { x: number; y: number; r: number; sprite: number; painted: number; spin: number; d: number; a: number }
+interface Head { x: number; y: number; r: number; sprite: number; painted: number; spin: number; d: number; a: number; fromX: number; fromY: number; delay: number }
+interface Gust { y: number; amp: number; freq: number; speed: number; size: number; spin: number; painted: number; shape: number; tone: string; delay: number }
 interface Petal { head: number; angle: number; speed: number; size: number; spin: number; shape: number; painted: number; tone: string }
 
 const ease = (x: number) => 1 - Math.pow(1 - x, 3);
@@ -94,6 +97,7 @@ export function florecer(canvas: HTMLCanvasElement) {
   const petalPaths = LOOSE_PETALS.map((d) => new Path2D(d));
   let heads: Head[] = [];
   let petals: Petal[] = [];
+  let gust: Gust[] = [];
   let w = 0;
   let h = 0;
   let dpr = 1;
@@ -105,25 +109,32 @@ export function florecer(canvas: HTMLCanvasElement) {
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
     const rand = random(1031);
-    // A loose grid, jittered, so the heads overlap into one carpet of flowers
-    const step = Math.max(60, Math.min(w, h) / 7.5);
+    // A few loose flowers, one per cell of a coarse grid, never packed together
+    const base = Math.min(w, h);
+    const cols = w > h ? 5 : 3;
+    const rows = w > h ? 3 : 5;
     const cx = w / 2;
     const cy = h / 2;
     const far = Math.hypot(cx, cy);
     heads = [];
-    for (let y = -step * 0.4; y < h + step; y += step * 0.78) {
-      for (let x = -step * 0.4; x < w + step; x += step * 0.86) {
-        const hx = x + (rand() - 0.5) * step * 0.5;
-        const hy = y + (rand() - 0.5) * step * 0.5;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (rand() < 0.2) continue;
+        const hx = ((c + 0.2 + rand() * 0.6) / cols) * w;
+        const hy = ((r + 0.2 + rand() * 0.6) / rows) * h;
         heads.push({
           x: hx,
           y: hy,
-          r: step * (0.5 + rand() * 0.18),
+          r: base * (0.07 + rand() * 0.09),
           sprite: Math.floor(rand() * 9),
           painted: Math.floor(rand() * PAINTED_HEADS.length),
           spin: (rand() - 0.5) * 1.2,
           d: Math.hypot(hx - cx, hy - cy) / far,
           a: Math.atan2(hy - cy, hx - cx),
+          // They ride in on the wind, from the left and a little from below
+          fromX: -base * (0.3 + rand() * 0.6),
+          fromY: hy + base * (0.1 + rand() * 0.3),
+          delay: rand() * 0.35,
         });
       }
     }
@@ -131,12 +142,12 @@ export function florecer(canvas: HTMLCanvasElement) {
     heads.sort((a, b) => b.d - a.d);
     petals = [];
     heads.forEach((_, i) => {
-      for (let k = 0; k < 7; k++) {
+      for (let k = 0; k < 14; k++) {
         petals.push({
           head: i,
           angle: rand() * Math.PI * 2,
           speed: 0.6 + rand() * 0.9,
-          size: step * (0.13 + rand() * 0.09),
+          size: heads[i].r * (0.22 + rand() * 0.16),
           spin: (rand() - 0.5) * 8,
           shape: Math.floor(rand() * petalPaths.length),
           painted: Math.floor(rand() * PAINTED_PETALS.length),
@@ -144,18 +155,71 @@ export function florecer(canvas: HTMLCanvasElement) {
         });
       }
     });
+    // The swirl of petals the wind carries across the screen
+    gust = Array.from({ length: w > h ? 90 : 55 }, () => ({
+      y: rand() * h,
+      amp: base * (0.04 + rand() * 0.12),
+      freq: 1 + rand() * 2.5,
+      speed: 0.8 + rand() * 0.7,
+      size: base * (0.012 + rand() * 0.018),
+      spin: (rand() - 0.5) * 10,
+      painted: Math.floor(rand() * PAINTED_PETALS.length),
+      shape: Math.floor(rand() * petalPaths.length),
+      tone: PETAL_TONES[Math.floor(rand() * PETAL_TONES.length)],
+      delay: rand() * 0.6,
+    }));
   }
 
-  function draw(bloom: number, open: number) {
+  function petal(x: number, y: number, size: number, angle: number, flip: number, painted: number, shape: number, tone: string, alpha: number) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    const img = PAINTED_PETALS[painted];
+    if (img && ready(img)) {
+      const k = (size * 2.4) / Math.max(img.naturalWidth, img.naturalHeight);
+      ctx.scale(1, flip);
+      ctx.drawImage(img, (-img.naturalWidth * k) / 2, (-img.naturalHeight * k) / 2, img.naturalWidth * k, img.naturalHeight * k);
+    } else {
+      ctx.scale(size * 2, size * 2 * flip);
+      ctx.fillStyle = tone;
+      ctx.fill(petalPaths[shape]);
+    }
+    ctx.restore();
+  }
+
+  function draw(bloom: number, open: number, glow = 0) {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (bloom <= 0 || open >= 1) return;
+    if ((bloom <= 0 || open >= 1) && glow <= 0) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const reach = Math.hypot(w, h) * 0.6;
 
-    // Heads: each blooms on its own beat, center first, and opens on its own beat too
+    // A warm light while one painting gives way to the other
+    if (glow > 0) {
+      const g = ctx.createRadialGradient(w / 2, h * 0.45, 0, w / 2, h * 0.45, Math.hypot(w, h) * 0.6);
+      g.addColorStop(0, `rgba(255, 236, 200, ${0.75 * glow})`);
+      g.addColorStop(0.45, `rgba(255, 196, 120, ${0.35 * glow})`);
+      g.addColorStop(1, 'rgba(255, 170, 90, 0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+    }
+    if (bloom <= 0 || open >= 1) return;
+
+    // The swirl: petals stream across on the wind, and blow off the screen as the flowers open
+    for (const gp of gust) {
+      const k = clamp((bloom - gp.delay * 0.5) / 0.7) + open * 0.8 * gp.speed;
+      if (k <= 0) continue;
+      const x = -40 + k * gp.speed * (w + 80);
+      if (x > w + 40) continue;
+      const y = gp.y + Math.sin(k * gp.freq * Math.PI * 2) * gp.amp - k * h * 0.08;
+      const flip = 0.4 + 0.6 * Math.abs(Math.cos(k * gp.freq * 5));
+      petal(x, y, gp.size, gp.spin * k, flip, gp.painted, gp.shape, gp.tone, Math.min(1, k * 4) * (1 - open));
+    }
+
+    // Flowers: each rides the wind in on its own beat, and opens from the center outward
     const state = heads.map((hd) => {
-      const g = clamp((bloom - hd.d * 0.55) / 0.45);
+      const g = clamp((bloom - hd.delay) / 0.55);
       const o = clamp((open - hd.d * 0.5) / 0.5);
       return { g, o };
     });
@@ -165,12 +229,16 @@ export function florecer(canvas: HTMLCanvasElement) {
       const gone = ease(Math.min(1, o * 1.6));
       if (g <= 0 || gone >= 1) return;
       // Opening: the head lets go of its petals, shrinking and turning away
-      const r = hd.r * pop(g) * (1 - 0.7 * gone);
+      const r = hd.r * (0.6 + 0.4 * pop(g)) * (1 - 0.7 * gone);
       const drift = gone * reach * 0.08;
+      // In on a curve: fast at first, settling gently into place
+      const e = ease(g);
+      const x = hd.fromX + (hd.x - hd.fromX) * e;
+      const y = hd.fromY + (hd.y - hd.fromY) * e - Math.sin(e * Math.PI) * hd.r * 1.2;
       ctx.save();
       ctx.globalAlpha = Math.min(1, g * 3) * (1 - gone);
-      ctx.translate(hd.x + Math.cos(hd.a) * drift, hd.y + Math.sin(hd.a) * drift);
-      ctx.rotate(hd.spin + (1 - g) * -1.2 + gone * 2.4);
+      ctx.translate(x + Math.cos(hd.a) * drift, y + Math.sin(hd.a) * drift);
+      ctx.rotate(hd.spin + (1 - e) * -3 + gone * 2.4);
       const img = PAINTED_HEADS[hd.painted];
       if (img && ready(img)) {
         ctx.drawImage(shadow, -r * 1.05 + r * 0.08, -r * 1.05 + r * 0.12, r * 2.1, r * 2.1);
@@ -191,24 +259,8 @@ export function florecer(canvas: HTMLCanvasElement) {
       const dir = hd.a * 0.7 + pt.angle * 0.3;
       const x = hd.x + Math.cos(dir) * reach * 0.35 * e * pt.speed;
       const y = hd.y + Math.sin(dir) * reach * 0.35 * e * pt.speed + e * e * 40;
-      ctx.save();
-      ctx.globalAlpha = 1 - o;
-      ctx.translate(x, y);
-      ctx.rotate(pt.angle + pt.spin * e);
-      const flip = 0.5 + 0.5 * Math.abs(Math.cos(e * 6 + pt.angle));
-      const img = PAINTED_PETALS[pt.painted];
-      if (img && ready(img)) {
-        const k = (pt.size * 2.4) / Math.max(img.naturalWidth, img.naturalHeight);
-        ctx.scale(1, flip);
-        ctx.drawImage(img, (-img.naturalWidth * k) / 2, (-img.naturalHeight * k) / 2, img.naturalWidth * k, img.naturalHeight * k);
-      } else {
-        ctx.scale(pt.size * 2, pt.size * 2 * flip);
-        ctx.fillStyle = pt.tone;
-        ctx.fill(petalPaths[pt.shape]);
-      }
-      ctx.restore();
+      petal(x, y, pt.size, pt.angle + pt.spin * e, 0.5 + 0.5 * Math.abs(Math.cos(e * 6 + pt.angle)), pt.painted, pt.shape, pt.tone, 1 - o);
     }
-
   }
 
   layout();

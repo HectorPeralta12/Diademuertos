@@ -1,11 +1,19 @@
 [
   {
-    "source": "assets/xolo/hero-pictorico-v1.png",
+    "source": "assets/xolo/hero_upscaled.webp",
     "url": "/images/xolo-hero.webp",
     "width": 1672,
     "height": 941,
-    "originalBytes": 2544113,
-    "webpBytes": 354280
+    "originalBytes": 3547294,
+    "webpBytes": 320166
+  },
+  {
+    "source": "assets/xolo/hero_upscaled.webp",
+    "url": "/images/xolo-hero@2x.webp",
+    "width": 3344,
+    "height": 1882,
+    "originalBytes": 3547294,
+    "webpBytes": 835226
   },
   {
     "source": "assets/altar/checkpoints-pictoricos-v2/00-vista-general.png",

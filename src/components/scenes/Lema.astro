@@ -5,7 +5,7 @@
  * fades and the Xolo stays as a spirit of light, the guide for the 2D half of
  * the page. Everything follows --p; the gold dust is the only JavaScript.
  */
-import { XOLO_D } from '../../scripts/xolo-path';
+import { XOLO_BOX as BOX, XOLO_D } from '../../scripts/xolo-path';
 
 const lines = ['Mientras alguien los recuerde,', 'siguen encontrando', 'el camino a casa.'];
 
@@ -13,8 +13,6 @@ let n = 0;
 const words = lines.map((line) => line.split(' ').map((w) => ({ w, i: n++ })));
 const total = n;
 
-// The drawing's frame in the painting's pixels, with room for the glow
-const BOX = { x: 1050, y: 190, w: 520, h: 680 };
 // The eye, measured on the painting
 const EYE = { x: 1212, y: 352 };
 ---
@@ -38,9 +36,10 @@ const EYE = { x: 1212, y: 352 };
     <figure class="cruce" aria-hidden="true">
       <svg viewBox={`${BOX.x} ${BOX.y} ${BOX.w} ${BOX.h}`} data-box={JSON.stringify(BOX)}>
         <defs>
-          <clipPath id="xolo-recorte">
-            <path d={XOLO_D} />
-          </clipPath>
+          <!-- The dog cut out of the painting by color (scripts/xolo-mask.mjs) -->
+          <mask id="xolo-recorte" maskUnits="userSpaceOnUse" x={BOX.x} y={BOX.y} width={BOX.w} height={BOX.h}>
+            <image href="/images/xolo-mascara.png" x={BOX.x} y={BOX.y} width={BOX.w} height={BOX.h} />
+          </mask>
           <radialGradient id="xolo-luz" cx="1250" cy="520" r="360" gradientUnits="userSpaceOnUse">
             <stop offset="0" stop-color="#fff6d6" />
             <stop offset="0.45" stop-color="#ffd06a" />
@@ -69,13 +68,18 @@ const EYE = { x: 1212, y: 352 };
 
         <g class="figura">
           <!-- Spirit: a halo, then the body of light -->
-          <path class="halo" d={XOLO_D} fill="#ffc45a" filter="url(#xolo-halo)" />
-          <path class="espiritu" d={XOLO_D} fill="url(#xolo-luz)" />
-          <image class="relieve" href="/images/xolo-hero.webp" x="0" y="0" width="1672" height="941" clip-path="url(#xolo-recorte)" filter="url(#xolo-relieve)" />
+          <g class="halo" filter="url(#xolo-halo)">
+            <rect x={BOX.x} y={BOX.y} width={BOX.w} height={BOX.h} fill="#ffc45a" mask="url(#xolo-recorte)" />
+          </g>
+          <rect class="espiritu" x={BOX.x} y={BOX.y} width={BOX.w} height={BOX.h} fill="url(#xolo-luz)" mask="url(#xolo-recorte)" />
+          <!-- Blend on the group: a masked group is isolated, so blending inside it would see nothing -->
+          <g class="relieve" mask="url(#xolo-recorte)">
+            <image href="/images/xolo-hero.webp" x="0" y="0" width="1672" height="941" filter="url(#xolo-relieve)" />
+          </g>
           <ellipse class="ojo" cx={EYE.x} cy={EYE.y} rx="5.5" ry="4" transform={`rotate(-12 ${EYE.x} ${EYE.y})`} />
 
           <!-- The painted Xolo, cut out of the opening illustration -->
-          <image class="pintura" href="/images/xolo-hero.webp" x="0" y="0" width="1672" height="941" clip-path="url(#xolo-recorte)" />
+          <image class="pintura" href="/images/xolo-hero.webp" x="0" y="0" width="1672" height="941" mask="url(#xolo-recorte)" />
           <!-- Storybook ink line around the painting -->
           <path class="tinta" d={XOLO_D} />
           <!-- The gold line that draws itself -->
@@ -220,10 +224,10 @@ const EYE = { x: 1212, y: 352 };
 
   .tinta {
     fill: none;
-    stroke: #1a1030;
-    stroke-width: 2;
+    stroke: #24110f;
+    stroke-width: 1.4;
     stroke-linejoin: round;
-    opacity: calc(0.7 * (1 - var(--fade)));
+    opacity: calc(0.55 * (1 - var(--fade)));
     filter: url(#trazo);
   }
 

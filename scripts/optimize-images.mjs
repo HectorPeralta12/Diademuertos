@@ -4,7 +4,9 @@ import sharp from 'sharp';
 
 const root = new URL('../', import.meta.url);
 const images = [
-  ['assets/xolo/hero-pictorico-v1.png', 'xolo-hero.webp'],
+  // The upscaled painting (4×), served at the original size and at 2× for dense screens
+  ['assets/xolo/hero_upscaled.webp', 'xolo-hero.webp', 1672],
+  ['assets/xolo/hero_upscaled.webp', 'xolo-hero@2x.webp', 3344],
   ['assets/altar/checkpoints-pictoricos-v2/00-vista-general.png', 'altar-general.webp'],
   ['assets/altar/checkpoints-pictoricos-v2/01-flores-velas-copal.png', 'altar-flores-velas-copal.webp'],
   ['assets/altar/checkpoints-pictoricos-v2/02-comida-agua.png', 'altar-comida-agua.webp'],
@@ -14,10 +16,11 @@ const output = new URL('public/images/', root);
 await mkdir(output, { recursive: true });
 const manifest = [];
 
-for (const [source, filename] of images) {
+for (const [source, filename, width] of images) {
   const sourcePath = fileURLToPath(new URL(source, root));
   const targetPath = fileURLToPath(new URL(filename, output));
   const result = await sharp(sourcePath)
+    .resize(width ? { width } : undefined)
     .webp({ quality: 90, effort: 6 })
     .toFile(targetPath);
   const sourceInfo = await stat(sourcePath);

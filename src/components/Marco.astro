@@ -70,6 +70,9 @@ const pieces = corners.map((corner, i) => ({
     z-index: -1;
     pointer-events: none;
     overflow: hidden;
+    /* Grows in as the section starts and pulls back before it ends, so two
+       sections never meet with their foliage cut along the same edge */
+    --entra: min(clamp(0, var(--p, 0.5) / 0.1, 1), clamp(0, (0.97 - var(--p, 0.5)) / 0.1, 1));
   }
 
   .esquina {
@@ -78,11 +81,21 @@ const pieces = corners.map((corner, i) => ({
     height: auto;
     aspect-ratio: 1;
     overflow: visible;
+    transition: translate 600ms var(--ease);
   }
   .esquina--tl { top: 0; left: 0; }
   .esquina--tr { top: 0; right: 0; scale: -1 1; }
   .esquina--bl { bottom: 0; left: 0; }
   .esquina--br { bottom: 0; right: 0; scale: -1 1; }
+  /* Vines drop from above, bushes rise from below */
+  .esquina--tl,
+  .esquina--tr {
+    translate: 0 calc((1 - var(--entra)) * -102%);
+  }
+  .esquina--bl,
+  .esquina--br {
+    translate: 0 calc((1 - var(--entra)) * 102%);
+  }
 
   /* Parallax: near leaves drift more than far ones as the scene moves */
   .lejos {

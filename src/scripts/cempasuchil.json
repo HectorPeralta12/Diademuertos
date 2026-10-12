@@ -1,0 +1,399 @@
+{
+  "flor": [
+    {
+      "src": "/images/cempasuchil/flor-1.webp",
+      "w": 320,
+      "h": 295
+    },
+    {
+      "src": "/images/cempasuchil/flor-2.webp",
+      "w": 320,
+      "h": 303
+    },
+    {
+      "src": "/images/cempasuchil/flor-3.webp",
+      "w": 320,
+      "h": 296
+    },
+    {
+      "src": "/images/cempasuchil/flor-4.webp",
+      "w": 320,
+      "h": 304
+    },
+    {
+      "src": "/images/cempasuchil/flor-5.webp",
+      "w": 320,
+      "h": 299
+    },
+    {
+      "src": "/images/cempasuchil/flor-6.webp",
+      "w": 320,
+      "h": 304
+    },
+    {
+      "src": "/images/cempasuchil/flor-7.webp",
+      "w": 320,
+      "h": 311
+    },
+    {
+      "src": "/images/cempasuchil/flor-8.webp",
+      "w": 320,
+      "h": 308
+    },
+    {
+      "src": "/images/cempasuchil/flor-9.webp",
+      "w": 320,
+      "h": 298
+    }
+  ],
+  "florcita": [
+    {
+      "src": "/images/cempasuchil/florcita-1.webp",
+      "w": 200,
+      "h": 196
+    },
+    {
+      "src": "/images/cempasuchil/florcita-2.webp",
+      "w": 200,
+      "h": 195
+    },
+    {
+      "src": "/images/cempasuchil/florcita-3.webp",
+      "w": 161,
+      "h": 171
+    },
+    {
+      "src": "/images/cempasuchil/florcita-4.webp",
+      "w": 200,
+      "h": 194
+    },
+    {
+      "src": "/images/cempasuchil/florcita-5.webp",
+      "w": 200,
+      "h": 186
+    },
+    {
+      "src": "/images/cempasuchil/florcita-6.webp",
+      "w": 200,
+      "h": 189
+    },
+    {
+      "src": "/images/cempasuchil/florcita-7.webp",
+      "w": 160,
+      "h": 200
+    },
+    {
+      "src": "/images/cempasuchil/florcita-8.webp",
+      "w": 200,
+      "h": 197
+    },
+    {
+      "src": "/images/cempasuchil/florcita-9.webp",
+      "w": 200,
+      "h": 188
+    },
+    {
+      "src": "/images/cempasuchil/florcita-10.webp",
+      "w": 200,
+      "h": 188
+    },
+    {
+      "src": "/images/cempasuchil/florcita-11.webp",
+      "w": 200,
+      "h": 177
+    }
+  ],
+  "petalo": [
+    {
+      "src": "/images/cempasuchil/petalo-1.webp",
+      "w": 120,
+      "h": 105
+    },
+    {
+      "src": "/images/cempasuchil/petalo-2.webp",
+      "w": 120,
+      "h": 83
+    },
+    {
+      "src": "/images/cempasuchil/petalo-3.webp",
+      "w": 103,
+      "h": 120
+    },
+    {
+      "src": "/images/cempasuchil/petalo-4.webp",
+      "w": 120,
+      "h": 60
+    },
+    {
+      "src": "/images/cempasuchil/petalo-5.webp",
+      "w": 108,
+      "h": 120
+    },
+    {
+      "src": "/images/cempasuchil/petalo-6.webp",
+      "w": 120,
+      "h": 63
+    },
+    {
+      "src": "/images/cempasuchil/petalo-7.webp",
+      "w": 120,
+      "h": 102
+    },
+    {
+      "src": "/images/cempasuchil/petalo-8.webp",
+      "w": 67,
+      "h": 120
+    },
+    {
+      "src": "/images/cempasuchil/petalo-9.webp",
+      "w": 94,
+      "h": 120
+    },
+    {
+      "src": "/images/cempasuchil/petalo-10.webp",
+      "w": 120,
+      "h": 95
+    },
+    {
+      "src": "/images/cempasuchil/petalo-11.webp",
+      "w": 50,
+      "h": 120
+    },
+    {
+      "src": "/images/cempasuchil/petalo-12.webp",
+      "w": 120,
+      "h": 115
+    },
+    {
+      "src": "/images/cempasuchil/petalo-13.webp",
+      "w": 120,
+      "h": 84
+    },
+    {
+      "src": "/images/cempasuchil/petalo-14.webp",
+      "w": 89,
+      "h": 120
+    },
+    {
+      "src": "/images/cempasuchil/petalo-15.webp",
+      "w": 120,
+      "h": 99
+    },
+    {
+      "src": "/images/cempasuchil/petalo-16.webp",
+      "w": 120,
+      "h": 92
+    },
+    {
+      "src": "/images/cempasuchil/petalo-17.webp",
+      "w": 120,
+      "h": 86
+    },
+    {
+      "src": "/images/cempasuchil/petalo-18.webp",
+      "w": 69,
+      "h": 84
+    },
+    {
+      "src": "/images/cempasuchil/petalo-19.webp",
+      "w": 120,
+      "h": 73
+    },
+    {
+      "src": "/images/cempasuchil/petalo-20.webp",
+      "w": 120,
+      "h": 51
+    },
+    {
+      "src": "/images/cempasuchil/petalo-21.webp",
+      "w": 111,
+      "h": 120
+    },
+    {
+      "src": "/images/cempasuchil/petalo-22.webp",
+      "w": 113,
+      "h": 66
+    },
+    {
+      "src": "/images/cempasuchil/petalo-23.webp",
+      "w": 120,
+      "h": 60
+    },
+    {
+      "src": "/images/cempasuchil/petalo-24.webp",
+      "w": 120,
+      "h": 63
+    },
+    {
+      "src": "/images/cempasuchil/petalo-25.webp",
+      "w": 120,
+      "h": 91
+    },
+    {
+      "src": "/images/cempasuchil/petalo-26.webp",
+      "w": 120,
+      "h": 58
+    },
+    {
+      "src": "/images/cempasuchil/petalo-27.webp",
+      "w": 120,
+      "h": 74
+    },
+    {
+      "src": "/images/cempasuchil/petalo-28.webp",
+      "w": 120,
+      "h": 92
+    },
+    {
+      "src": "/images/cempasuchil/petalo-29.webp",
+      "w": 82,
+      "h": 78
+    },
+    {
+      "src": "/images/cempasuchil/petalo-30.webp",
+      "w": 73,
+      "h": 53
+    },
+    {
+      "src": "/images/cempasuchil/petalo-31.webp",
+      "w": 120,
+      "h": 98
+    },
+    {
+      "src": "/images/cempasuchil/petalo-32.webp",
+      "w": 120,
+      "h": 80
+    },
+    {
+      "src": "/images/cempasuchil/petalo-33.webp",
+      "w": 120,
+      "h": 70
+    },
+    {
+      "src": "/images/cempasuchil/petalo-34.webp",
+      "w": 120,
+      "h": 94
+    }
+  ],
+  "hoja": [
+    {
+      "src": "/images/cempasuchil/hoja-1.webp",
+      "w": 143,
+      "h": 161
+    },
+    {
+      "src": "/images/cempasuchil/hoja-2.webp",
+      "w": 76,
+      "h": 95
+    },
+    {
+      "src": "/images/cempasuchil/hoja-3.webp",
+      "w": 117,
+      "h": 138
+    },
+    {
+      "src": "/images/cempasuchil/hoja-4.webp",
+      "w": 219,
+      "h": 220
+    },
+    {
+      "src": "/images/cempasuchil/hoja-5.webp",
+      "w": 220,
+      "h": 210
+    },
+    {
+      "src": "/images/cempasuchil/hoja-6.webp",
+      "w": 77,
+      "h": 151
+    },
+    {
+      "src": "/images/cempasuchil/hoja-7.webp",
+      "w": 111,
+      "h": 220
+    },
+    {
+      "src": "/images/cempasuchil/hoja-8.webp",
+      "w": 204,
+      "h": 220
+    },
+    {
+      "src": "/images/cempasuchil/hoja-9.webp",
+      "w": 220,
+      "h": 153
+    },
+    {
+      "src": "/images/cempasuchil/hoja-10.webp",
+      "w": 45,
+      "h": 60
+    }
+  ],
+  "monton": [
+    {
+      "src": "/images/cempasuchil/monton-1.webp",
+      "w": 220,
+      "h": 132
+    },
+    {
+      "src": "/images/cempasuchil/monton-2.webp",
+      "w": 220,
+      "h": 163
+    },
+    {
+      "src": "/images/cempasuchil/monton-3.webp",
+      "w": 220,
+      "h": 74
+    }
+  ],
+  "otro": [
+    {
+      "src": "/images/cempasuchil/otro-1.webp",
+      "w": 220,
+      "h": 195
+    },
+    {
+      "src": "/images/cempasuchil/otro-2.webp",
+      "w": 116,
+      "h": 220
+    },
+    {
+      "src": "/images/cempasuchil/otro-3.webp",
+      "w": 220,
+      "h": 210
+    },
+    {
+      "src": "/images/cempasuchil/otro-4.webp",
+      "w": 220,
+      "h": 187
+    },
+    {
+      "src": "/images/cempasuchil/otro-5.webp",
+      "w": 220,
+      "h": 167
+    },
+    {
+      "src": "/images/cempasuchil/otro-6.webp",
+      "w": 153,
+      "h": 190
+    },
+    {
+      "src": "/images/cempasuchil/otro-7.webp",
+      "w": 220,
+      "h": 205
+    },
+    {
+      "src": "/images/cempasuchil/otro-8.webp",
+      "w": 220,
+      "h": 147
+    },
+    {
+      "src": "/images/cempasuchil/otro-9.webp",
+      "w": 220,
+      "h": 197
+    },
+    {
+      "src": "/images/cempasuchil/otro-10.webp",
+      "w": 214,
+      "h": 220
+    }
+  ]
+}

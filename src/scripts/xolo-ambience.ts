@@ -7,6 +7,15 @@
  */
 
 import { drawSparkle, twinkle } from './sparkle';
+import piezas from './cempasuchil.json';
+
+// Painted petals from the cempasúchil sheet; a drawn petal stands in until they load
+const PAINTED = piezas.petalo.map((p) => {
+  const img = new Image();
+  img.decoding = 'async';
+  img.src = p.src;
+  return img;
+});
 
 export const ART_W = 1672;
 export const ART_H = 941;
@@ -42,7 +51,7 @@ function inSky(x: number, y: number) {
 }
 
 interface Star { x: number; y: number; r: number; phase: number; speed: number; flare: boolean }
-interface Petal { x: number; y: number; vx: number; vy: number; rot: number; spin: number; sway: number; size: number; tone: string; phase: number }
+interface Petal { x: number; y: number; vx: number; vy: number; rot: number; spin: number; sway: number; size: number; tone: string; phase: number; painted: number }
 
 export function ambience(canvas: HTMLCanvasElement, still: boolean) {
   const ctx = canvas.getContext('2d')!;
@@ -73,6 +82,7 @@ export function ambience(canvas: HTMLCanvasElement, still: boolean) {
       size: 5 + rand() * 5,
       tone: PETAL_TONES[Math.floor(rand() * PETAL_TONES.length)],
       phase: rand() * Math.PI * 2,
+      painted: Math.floor(rand() * PAINTED.length),
     };
   }
 
@@ -145,6 +155,13 @@ export function ambience(canvas: HTMLCanvasElement, still: boolean) {
     ctx.rotate(p.rot);
     ctx.scale(0.35 + 0.65 * Math.abs(flip), 1);
     ctx.globalAlpha = 0.95;
+    const img = PAINTED[p.painted];
+    if (img && img.complete && img.naturalWidth) {
+      const k = (p.size * 2.6) / Math.max(img.naturalWidth, img.naturalHeight);
+      ctx.drawImage(img, (-img.naturalWidth * k) / 2, (-img.naturalHeight * k) / 2, img.naturalWidth * k, img.naturalHeight * k);
+      ctx.restore();
+      return;
+    }
     ctx.fillStyle = p.tone;
     ctx.beginPath();
     ctx.moveTo(0, -p.size);

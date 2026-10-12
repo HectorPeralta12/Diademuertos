@@ -1,0 +1,179 @@
+---
+/**
+ * The guide: after the crossing, the Xolo of light walks along the bottom of
+ * the screen through the 2D half of the page. Where it stands is how far along
+ * the journey you are; it takes a step whenever you scroll, turns around when
+ * you go back, and leaves gold dust behind.
+ *
+ * Frames come from scripts/xolo-guia.mjs.
+ */
+// Walk cycle over the three poses: stride, passing, the other stride, passing
+const FRAMES = ['/images/guia/paso-2.webp', '/images/guia/paso-1.webp', '/images/guia/paso-3.webp'];
+---
+
+<div class="guia" aria-hidden="true" data-guia>
+  <canvas data-guia-polvo></canvas>
+  <div class="xolo" data-guia-xolo>
+    {FRAMES.map((src, i) => <img src={src} alt="" width="370" height="328" decoding="async" loading="lazy" data-paso={i} class={i === 1 ? 'is-on' : ''} />)}
+  </div>
+</div>
+
+<script>
+  import { $, $$ } from '../scripts/dom';
+  import { reducedMotion } from '../scripts/scenes';
+  import { polvo } from '../scripts/polvo';
+
+  const guia = $('[data-guia]')!;
+  const xolo = $('[data-guia-xolo]', guia)!;
+  const frames = $$<HTMLImageElement>('[data-paso]', guia);
+  const dust = polvo($<HTMLCanvasElement>('[data-guia-polvo]', guia)!);
+  const from = $('[data-scene="lema"]')!;
+  const to = $('[data-scene="cierre"]')!;
+
+  // Walk cycle: stride, passing, other stride, passing; index 1 also stands still
+  const CYCLE = [0, 1, 2, 1];
+  const STEP = 70; // pixels of scroll per step
+
+  let start = 0;
+  let end = 1;
+  function measure() {
+    const vh = window.innerHeight;
+    // From the end of the crossing to the closing painting
+    start = from.offsetTop + from.offsetHeight - vh * 1.05;
+    end = to.offsetTop - vh * 0.6;
+  }
+  measure();
+  window.addEventListener('resize', measure);
+  window.addEventListener('load', measure);
+
+  let lastY = window.scrollY;
+  let travelled = 0;
+  let step = 0;
+  let facing = 1;
+  let idle = 0;
+  let raf = 0;
+  let lastTime = 0;
+
+  function show(i: number) {
+    frames.forEach((f, k) => f.classList.toggle('is-on', k === i));
+  }
+
+  function frame(now: number) {
+    const dt = Math.min(0.05, lastTime ? (now - lastTime) / 1000 : 0);
+    lastTime = now;
+    const y = window.scrollY;
+    const delta = y - lastY;
+    lastY = y;
+
+    const p = (y - start) / (end - start);
+    const on = p > -0.02 && p < 1.02;
+    const t = Math.min(1, Math.max(0, p));
+    guia.style.setProperty('--viaje', String(t));
+    guia.style.setProperty('--ver', String(Math.min(1, Math.max(0, Math.min((p + 0.02) / 0.04, (1.02 - p) / 0.04)))));
+
+    if (on && delta !== 0) {
+      idle = 0;
+      if (Math.sign(delta) !== facing) {
+        facing = Math.sign(delta);
+        xolo.classList.toggle('is-back', facing < 0);
+      }
+      if (!reducedMotion) {
+        travelled += Math.abs(delta);
+        while (travelled >= STEP) {
+          travelled -= STEP;
+          step = (step + 1) % CYCLE.length;
+        }
+        show(CYCLE[step]);
+      }
+    } else {
+      idle += dt;
+      // Stops on the passing pose, standing on all fours
+      if (idle > 0.25) show(1);
+    }
+
+    // Dust from the paws while walking, a slow shimmer while waiting
+    if (on && !reducedMotion) {
+      const r = xolo.getBoundingClientRect();
+      const g = guia.getBoundingClientRect();
+      const walking = idle < 0.25;
+      const n = walking ? 2 : Math.random() < 0.15 ? 1 : 0;
+      for (let i = 0; i < n; i++) {
+        const x = r.left - g.left + r.width * (0.2 + Math.random() * 0.6);
+        const yy = walking ? r.bottom - g.top - 6 : r.top - g.top + r.height * (0.2 + Math.random() * 0.6);
+        dust.emit(x, yy, 1, walking ? 10 : 30);
+      }
+    }
+    dust.step(dt);
+
+    if (on || dust.alive) raf = requestAnimationFrame(frame);
+    else {
+      raf = 0;
+      lastTime = 0;
+    }
+  }
+
+  const wake = () => {
+    if (!raf) raf = requestAnimationFrame(frame);
+  };
+  window.addEventListener('scroll', wake, { passive: true });
+  wake();
+</script>
+
+<style>
+  .guia {
+    --viaje: 0;
+    --ver: 0;
+    --alto: 104px;
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 40;
+    height: calc(var(--alto) * 2.2);
+    pointer-events: none;
+    opacity: var(--ver);
+  }
+
+  .guia canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .xolo {
+    --ancho: calc(var(--alto) * 370 / 328);
+    position: absolute;
+    bottom: 12px;
+    left: calc(var(--gutter) + (100% - var(--ancho) - var(--gutter) * 2) * var(--viaje));
+    width: var(--ancho);
+    height: var(--alto);
+    /* The poses face left; walking forward it faces right */
+    transform: scaleX(-1);
+    transition: transform 400ms var(--ease);
+    filter: drop-shadow(0 0 10px rgb(255 196 90 / 0.55)) drop-shadow(0 0 28px rgb(255 160 60 / 0.3));
+  }
+  .xolo.is-back {
+    transform: none;
+  }
+
+  .xolo img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    visibility: hidden;
+  }
+  .xolo img.is-on {
+    visibility: visible;
+  }
+
+  @media (min-width: 1280px) {
+    .guia {
+      --alto: 128px;
+    }
+  }
+  @media (max-width: 767px) {
+    .guia {
+      --alto: 80px;
+    }
+  }
+</style>

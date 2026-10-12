@@ -12,7 +12,9 @@ interface Mote { x: number; y: number; vx: number; vy: number; life: number; age
 
 const TONES = ['255, 214, 120', '255, 236, 170', '255, 190, 90'];
 
-export function polvo(canvas: HTMLCanvasElement, box: { x: number; y: number; w: number; h: number }) {
+export function polvo(canvas: HTMLCanvasElement, viewBox?: { x: number; y: number; w: number; h: number }) {
+  // Without a viewBox, emitters use the canvas's own CSS pixels
+  const box = viewBox ?? { x: 0, y: 0, w: 1, h: 1 };
   const ctx = canvas.getContext('2d')!;
   const motes: Mote[] = [];
   let scale = 1;
@@ -22,6 +24,10 @@ export function polvo(canvas: HTMLCanvasElement, box: { x: number; y: number; w:
     dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = Math.round(canvas.clientWidth * dpr);
     canvas.height = Math.round(canvas.clientHeight * dpr);
+    if (!viewBox) {
+      box.w = canvas.clientWidth || 1;
+      box.h = canvas.clientHeight || 1;
+    }
     // The SVG fits its viewBox with "meet": the same here
     scale = Math.min(canvas.width / box.w, canvas.height / box.h);
   }

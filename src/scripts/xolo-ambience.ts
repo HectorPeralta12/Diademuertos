@@ -6,6 +6,8 @@
  * canvas only needs to sit exactly on top of the image and scale with it.
  */
 
+import { drawSparkle, twinkle } from './sparkle';
+
 export const ART_W = 1672;
 export const ART_H = 941;
 
@@ -90,29 +92,9 @@ export function ambience(canvas: HTMLCanvasElement, still: boolean) {
   }
 
   function drawStar(s: Star, time: number) {
-    const tw = 0.5 + 0.5 * Math.sin(time * s.speed + s.phase);
+    const tw = twinkle(time, s.speed, s.phase);
     const a = s.flare ? 0.35 + 0.65 * tw : 0.15 + 0.75 * tw;
-    const r = s.r * (0.75 + 0.35 * tw);
-    ctx.globalAlpha = a;
-    // Soft halo
-    const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, r * 4);
-    g.addColorStop(0, 'rgba(255, 244, 214, 0.9)');
-    g.addColorStop(1, 'rgba(255, 244, 214, 0)');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(s.x, s.y, r * 4, 0, Math.PI * 2);
-    ctx.fill();
-    // Four point sparkle, the storybook kind
-    ctx.fillStyle = '#fff8e6';
-    const arm = s.flare ? r * 3.2 : r * 1.8;
-    const waist = r * 0.32;
-    ctx.beginPath();
-    ctx.moveTo(s.x, s.y - arm);
-    ctx.quadraticCurveTo(s.x + waist, s.y - waist, s.x + arm, s.y);
-    ctx.quadraticCurveTo(s.x + waist, s.y + waist, s.x, s.y + arm);
-    ctx.quadraticCurveTo(s.x - waist, s.y + waist, s.x - arm, s.y);
-    ctx.quadraticCurveTo(s.x - waist, s.y - waist, s.x, s.y - arm);
-    ctx.fill();
+    drawSparkle(ctx, s.x, s.y, s.r * (0.75 + 0.35 * tw), a, s.flare);
   }
 
   function drawShooting(dt: number) {

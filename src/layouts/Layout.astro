@@ -36,6 +36,26 @@ const chapters = [
   <body>
     <a class="skip mono" href="#contenido">Saltar al contenido</a>
 
+    <!-- The storybook night under every 2D section: watercolor wash, light and stars -->
+    <div class="cielo" aria-hidden="true">
+      <canvas data-cielo></canvas>
+    </div>
+
+    <!-- Shared hand drawn filters: apply with filter: url(#trazo) or url(#acuarela) -->
+    <svg class="sr-only" aria-hidden="true" focusable="false">
+      <defs>
+        <filter id="trazo" x="-5%" y="-5%" width="110%" height="110%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7" result="n" />
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="3.5" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+        <filter id="acuarela" x="-10%" y="-10%" width="120%" height="120%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" seed="3" result="n" />
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="9" xChannelSelector="R" yChannelSelector="G" result="d" />
+          <feGaussianBlur in="d" stdDeviation="0.6" />
+        </filter>
+      </defs>
+    </svg>
+
     <header class="chrome">
       <a class="brand mono" href="#inicio">Día de Muertos</a>
       <nav aria-label="Capítulos">
@@ -51,21 +71,49 @@ const chapters = [
 
     <slot />
 
+    <!-- Paper grain over everything: paintings and code drawings share one material -->
+    <div class="grano" aria-hidden="true"></div>
+
+    <script>
+      import { cielo } from '../scripts/cielo';
+
+      const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const sky = cielo(document.querySelector<HTMLCanvasElement>('[data-cielo]')!, still);
+      // The sky only shows behind the 2D sections; painted scenes cover it
+      const open = new Set<Element>();
+      const sync = () => (open.size && !still ? sky.play() : sky.pause());
+      const io = new IntersectionObserver((entries) => {
+        for (const e of entries) e.isIntersecting ? open.add(e.target) : open.delete(e.target);
+        sync();
+      });
+      document.querySelectorAll('[data-scene]:not([data-pintada])').forEach((el) => io.observe(el));
+      if (still) window.addEventListener('scroll', () => requestAnimationFrame(sky.draw), { passive: true });
+    </script>
+
   </body>
 </html>
 
 <style is:global>
+  /* Registered so the sky's light can fade between themes */
+  @property --luz {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: transparent;
+  }
+
   :root {
-    /* Materials of the story */
-    --noche: #100c1f;
+    /* One night, sampled from the Xolo painting: the sky darkens and warms as the story moves */
+    --noche: #131845;
+    --anochecer: #241f5c;
+    --ciruela: #2a1d4f;
+    --ocaso: #3a1f3f;
+    --rosa-noche: #4a1c3c;
+    --brasa: #34161a;
     --cera: #f3ece0;
-    --humo: #9d93b5;
-    --amate: #ece3d2;
-    --tinta: #23190f;
+    --humo: #a9a3d0;
     --cempasuchil: #f29a1c;
-    --morado: #34174a;
-    --rosa: #c2185b;
-    --copal: #24130b;
+    --rosa: #c34c48;
+    --vela: #ffd27a;
 
     --font-sans: var(--font-jost);
     --font-mono: var(--font-geist-mono);
@@ -93,6 +141,10 @@ const chapters = [
     --fg: var(--cera);
     --fg-dim: var(--humo);
     --accent: var(--cempasuchil);
+    /* How much of the starry sky shows through */
+    --estrellas: 1;
+    /* Where the light pools in the sky: a moon, a candle, a sunset */
+    --luz: color-mix(in srgb, var(--vela) 14%, transparent);
   }
 
   @media (min-width: 768px) {
@@ -102,35 +154,38 @@ const chapters = [
     :root { --gutter: 64px; }
   }
 
+  /* Each theme is the same night at another hour, never a flat new color */
   html[data-theme='amate'] {
-    --bg: var(--amate);
-    --fg: var(--tinta);
-    --fg-dim: #75654f;
-    --accent: #b5420f;
+    --bg: var(--anochecer);
+    --fg-dim: #b6b0dc;
+    --luz: color-mix(in srgb, #9fb4ff 14%, transparent);
   }
   html[data-theme='cempasuchil'] {
-    --bg: var(--cempasuchil);
-    --fg: #1d1104;
-    --fg-dim: #6d4108;
-    --accent: #1d1104;
+    --bg: var(--ocaso);
+    --fg-dim: #c49ab4;
+    --accent: #f7a21b;
+    --estrellas: 0.7;
+    --luz: color-mix(in srgb, var(--cempasuchil) 22%, transparent);
   }
   html[data-theme='morado'] {
-    --bg: var(--morado);
+    --bg: var(--ciruela);
     --fg: #f5e9f6;
-    --fg-dim: #c3a2cf;
-    --accent: var(--cempasuchil);
+    --fg-dim: #b9a6d6;
   }
   html[data-theme='rosa'] {
-    --bg: var(--rosa);
+    --bg: var(--rosa-noche);
     --fg: #fff1f6;
-    --fg-dim: #f7b8cf;
-    --accent: #ffd27a;
+    --fg-dim: #d9a3bf;
+    --accent: var(--vela);
+    --estrellas: 0.8;
+    --luz: color-mix(in srgb, var(--rosa) 24%, transparent);
   }
   html[data-theme='copal'] {
-    --bg: var(--copal);
+    --bg: var(--brasa);
     --fg: #f2dcc8;
     --fg-dim: #b98a68;
-    --accent: var(--cempasuchil);
+    --estrellas: 0.45;
+    --luz: color-mix(in srgb, var(--cempasuchil) 18%, transparent);
   }
 
   *,
@@ -195,6 +250,49 @@ const chapters = [
     line-height: 16px;
     letter-spacing: 0.04em;
     text-transform: uppercase;
+  }
+
+  /* The sky: a fixed backdrop the 2D sections show through */
+  .cielo {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    /* Light pooling from above, then the watercolor bloom of the paper, then a storybook vignette */
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, var(--luz), transparent 70%),
+      radial-gradient(ellipse 120% 90% at 50% 45%, transparent 55%, rgb(6 4 24 / 0.5));
+    transition: --luz 900ms var(--ease);
+  }
+  .cielo::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    /* Big, soft pigment blooms, like a watercolor wash drying unevenly */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='1000'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0045' numOctaves='4' seed='9' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E");
+    background-size: cover;
+    mix-blend-mode: soft-light;
+    opacity: 0.55;
+  }
+  .cielo canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: var(--estrellas);
+    transition: opacity 900ms var(--ease);
+  }
+
+  /* Paper grain on top of everything */
+  .grano {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+    background-size: 220px 220px;
+    mix-blend-mode: overlay;
+    opacity: 0.14;
   }
 
   .sr-only {

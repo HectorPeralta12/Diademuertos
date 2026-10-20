@@ -129,6 +129,13 @@ export default {
     checked: 'Datos revisados el 20 de octubre de 2026. Confirma horarios y precios en el sitio de cada evento antes de ir.',
     weekdays: ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'],
     months: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
+    lugares: {
+      kicker: 'Lugares latinos',
+      title: 'Para vivir la temporada todo el año',
+      text: 'Restaurantes, un café, una tienda y el mariachi de la ciudad: lugares latinos de Praga que celebran con la comunidad.',
+      site: 'Sitio web',
+      noSponsor: 'Sin patrocinio: solo lugares que confirmamos con su propio sitio o una fuente publicada.',
+    },
   },
   preguntas: {
     kicker: 'Preguntas',

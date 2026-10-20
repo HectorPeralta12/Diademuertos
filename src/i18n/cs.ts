@@ -130,6 +130,13 @@ const cs: Strings = {
     checked: 'Údaje ověřeny 20. října 2026. Časy a ceny si před návštěvou potvrďte na webu akce.',
     weekdays: ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'],
     months: ['ledna', 'února', 'března', 'dubna', 'května', 'června', 'července', 'srpna', 'září', 'října', 'listopadu', 'prosince'],
+    lugares: {
+      kicker: 'Latinskoamerická místa',
+      title: 'Ať si sezónu užijete celý rok',
+      text: 'Restaurace, kavárna, obchod a pražská mariachi kapela: latinskoamerická místa v Praze, která slaví s komunitou.',
+      site: 'Web',
+      noSponsor: 'Bez sponzorství: jen místa, která jsme ověřili na jejich vlastním webu nebo ve zveřejněném zdroji.',
+    },
   },
   preguntas: {
     kicker: 'Otázky',

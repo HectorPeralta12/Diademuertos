@@ -126,6 +126,13 @@ const en: Strings = {
     checked: 'Details checked on October 20, 2026. Confirm times and prices on each event’s website before you go.',
     weekdays: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
     months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+    lugares: {
+      kicker: 'Latin places',
+      title: 'To live the season all year round',
+      text: 'Restaurants, a café, a shop and the city’s mariachi: Latin places in Prague that celebrate with the community.',
+      site: 'Website',
+      noSponsor: 'Not sponsored: only places we confirmed through their own website or a published source.',
+    },
   },
   preguntas: {
     kicker: 'Questions',

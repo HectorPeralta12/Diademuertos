@@ -1,47 +1,17 @@
 ---
+import { strings } from '../../i18n';
 /**
  * Questions people ask about the altar, answered from the same sources.
  * A plain reading section: no sticky stage, the answers open in place.
  */
 
-const faqs = [
-  {
-    q: '¿Cuándo se pone la ofrenda?',
-    a: 'Unos días antes del 1 de noviembre, para que esté lista cuando lleguen las ánimas. Así lo describe el INAH.',
-  },
-  {
-    q: '¿Qué no puede faltar en una ofrenda?',
-    a: 'Según el INAH, la mayoría comparte retratos, veladoras, comida y agua, flores de cempasúchil, incienso o copal, papel picado, calaveritas de azúcar y pan de muerto.',
-  },
-  {
-    q: '¿Hay una sola forma correcta de ponerla?',
-    a: 'No. Cada región tiene sus variantes, aunque casi todas comparten esos elementos. Lo importante es que la ofrenda hable de quien recuerdas.',
-  },
-  {
-    q: '¿Puedo poner cosas que le gustaban a la persona?',
-    a: 'Sí. Se suelen poner objetos que le gustaban o que la representaban. Para los niños, sus juguetes favoritos.',
-  },
-  {
-    q: '¿Por qué se sirve comida y agua?',
-    a: 'Para saciar el hambre y la sed que traen las ánimas después de su largo recorrido.',
-  },
-  {
-    q: '¿El Día de Muertos es de origen prehispánico?',
-    a: 'Es un debate. La UNESCO lo describe como una fusión de ritos prehispánicos con fiestas católicas llegadas en el siglo XVI. El arqueólogo Víctor Joel Santos Ramírez, del INAH, sostiene que sus fechas vienen del calendario católico y que las veintenas mexicas dedicadas a los muertos no le dieron origen.',
-  },
-  {
-    q: '¿Es patrimonio de la humanidad?',
-    a: 'Sí. La UNESCO proclamó «Las fiestas indígenas dedicadas a los muertos» en 2003 y las inscribió en la Lista Representativa del Patrimonio Cultural Inmaterial en 2008.',
-  },
-  {
-    q: '¿Qué días se celebra?',
-    a: 'Las fechas centrales son el 1 de noviembre, Todos los Santos, y el 2 de noviembre, Fieles Difuntos. La UNESCO señala que las fiestas ocurren entre finales de octubre y principios de noviembre.',
-  },
-];
+const t = strings(Astro.currentLocale).preguntas;
+const faqs = t.faqs;
 
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
+  inLanguage: Astro.currentLocale ?? 'es',
   mainEntity: faqs.map((f) => ({
     '@type': 'Question',
     name: f.q,
@@ -53,8 +23,8 @@ const jsonLd = {
 <section class="flow preguntas" id="preguntas" data-scene="preguntas" data-theme="noche" data-chapter="preguntas">
   <div class="inner">
     <header>
-      <p class="mono kicker">Preguntas</p>
-      <h2>Lo que suele preguntarse sobre la ofrenda</h2>
+      <p class="mono kicker">{t.kicker}</p>
+      <h2>{t.title}</h2>
     </header>
 
     <div class="list">

@@ -1,20 +1,16 @@
 ---
 import { Font } from 'astro:assets';
+import { LANGS, homeOf, lang, strings } from '../i18n';
 
-const title = 'Día de Muertos · La ofrenda';
-const description =
-  'Recorre una ofrenda de Día de Muertos nivel por nivel: qué significa cada elemento, de dónde vienen sus fechas y por qué el cempasúchil marca el camino. Con información del INAH y la UNESCO.';
+const code = lang(Astro.currentLocale);
+const t = strings(Astro.currentLocale);
+const { title, description } = t.meta;
 
-const chapters = [
-  { id: 'ofrenda', label: 'Ofrenda' },
-  { id: 'elementos', label: 'Elementos' },
-  { id: 'historia', label: 'Historia' },
-  { id: 'preguntas', label: 'Preguntas' },
-];
+const chapters = (['ofrenda', 'elementos', 'historia', 'eventos', 'preguntas'] as const).map((id) => ({ id, label: t.ui.chapters[id] }));
 ---
 
 <!doctype html>
-<html lang="es" data-theme="noche">
+<html lang={code} data-theme="noche">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -24,7 +20,9 @@ const chapters = [
     <meta name="theme-color" content="#100c1f" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta property="og:type" content="website" />
-    <meta property="og:locale" content="es_MX" />
+    <meta property="og:locale" content={t.meta.ogLocale} />
+    {LANGS.map((l) => <link rel="alternate" hreflang={l.code} href={new URL(homeOf(l.code), Astro.site ?? Astro.url).href} />)}
+    <link rel="alternate" hreflang="x-default" href={new URL('/', Astro.site ?? Astro.url).href} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content="/images/xolo-hero.webp" />
@@ -34,7 +32,7 @@ const chapters = [
     <Font cssVariable="--font-geist-mono" />
   </head>
   <body>
-    <a class="skip mono" href="#contenido">Saltar al contenido</a>
+    <a class="skip mono" href="#contenido">{t.ui.skip}</a>
 
     <!-- The storybook night under every 2D section: one tall painting, from the sunset
          over the town up to the moon, that rises slowly as the story moves on, so
@@ -71,12 +69,21 @@ const chapters = [
     </svg>
 
     <header class="chrome">
-      <a class="brand mono" href="#inicio">Día de Muertos</a>
-      <nav aria-label="Capítulos">
+      <a class="brand mono" href="#inicio">{t.ui.brand}</a>
+      <nav aria-label={t.ui.chaptersLabel}>
         {
           chapters.map((c) => (
             <a class="mono" href={`#${c.id}`} data-chapter-link={c.id}>
               {c.label}
+            </a>
+          ))
+        }
+      </nav>
+      <nav class="idiomas" aria-label={t.ui.languageLabel}>
+        {
+          LANGS.map((l) => (
+            <a class="mono" href={homeOf(l.code)} hreflang={l.code} lang={l.code} title={l.name} aria-current={l.code === code ? 'true' : undefined}>
+              {l.label}
             </a>
           ))
         }
@@ -455,7 +462,24 @@ const chapters = [
     display: flex;
     gap: 4px;
   }
+  .chrome nav:first-of-type {
+    margin-left: auto;
+  }
+  /* Languages: quieter than the chapters, set apart by a thin rule */
+  .chrome .idiomas {
+    padding-left: 8px;
+    margin-left: 4px;
+    box-shadow: inset 1px 0 0 color-mix(in srgb, var(--fg) 25%, transparent);
+  }
+  .chrome .idiomas a {
+    padding: 8px 8px;
+  }
+  .chrome .idiomas a[aria-current] {
+    box-shadow: none;
+    color: var(--accent);
+  }
   .chrome nav a {
+    white-space: nowrap;
     padding: 8px 12px;
     border-radius: 9999px;
     opacity: 0.55;
@@ -468,7 +492,7 @@ const chapters = [
     box-shadow: inset 0 0 0 1px currentColor;
   }
   @media (max-width: 767px) {
-    .chrome nav a:not([aria-current]) {
+    .chrome nav:not(.idiomas) a:not([aria-current]) {
       display: none;
     }
   }

@@ -1,20 +1,24 @@
 ---
+import { strings } from '../../i18n';
 /**
  * How the dates traveled: from Rome in 609 to the UNESCO list in 2008.
  * A giant year counts toward each milestone while a marker slides along
  * a timeline drawn to scale.
  */
 
-const milestones = [
-  { year: 609, text: 'El papa Bonifacio IV consagra el Panteón de Agripa a Santa María y a todos los mártires. Es el antecedente de Todos los Santos.', src: 'INAH' },
-  { year: 835, text: 'El papa Gregorio IV fija la fiesta de Todos los Santos el 1 de noviembre.', src: 'INAH' },
-  { year: 998, text: 'Odilón, abad de Cluny, instituye el Día de los Fieles Difuntos el 2 de noviembre.', src: 'INAH' },
-  { year: 1540, text: 'Las fiestas llegan con los franciscanos. Entre 1535 y 1540, fray Toribio de Benavente, Motolinía, describe ofrendas de maíz, mantas, comida, pan, gallinas y cacao.', src: 'INAH' },
-  { year: 1859, text: 'El gobierno de Juárez seculariza los cementerios. En ese siglo, ir al panteón se vuelve una fiesta con comida, pulque y música.', src: 'INAH' },
-  { year: 1934, text: 'Entre 1934 y 1940 la fiesta se reinventa con un sentido nacionalista y laico, según la historiadora Elsa Malvido.', src: 'INAH' },
-  { year: 2003, text: 'La UNESCO proclama «Las fiestas indígenas dedicadas a los muertos» obra maestra del patrimonio oral e inmaterial.', src: 'UNESCO' },
-  { year: 2008, text: 'La fiesta entra en la Lista Representativa del Patrimonio Cultural Inmaterial de la Humanidad.', src: 'UNESCO' },
+const t = strings(Astro.currentLocale);
+// Years and sources stay; what happened comes from the language
+const YEARS = [
+  { year: 609, src: 'INAH' },
+  { year: 835, src: 'INAH' },
+  { year: 998, src: 'INAH' },
+  { year: 1540, src: 'INAH' },
+  { year: 1859, src: 'INAH' },
+  { year: 1934, src: 'INAH' },
+  { year: 2003, src: 'UNESCO' },
+  { year: 2008, src: 'UNESCO' },
 ];
+const milestones = YEARS.map((y, i) => ({ ...y, text: t.historia.milestones[i] }));
 
 const FIRST = 600;
 const LAST = 2026;
@@ -34,7 +38,7 @@ import Marco from '../Marco.astro';
       {
         milestones.map((m, i) => (
           <li class="beat" data-beat={beat(i)} data-year={m.year} style={`--x: ${pos(m.year).toFixed(2)}`}>
-            <p class="mono">{m.year} · Fuente: {m.src}</p>
+            <p class="mono">{m.year} · {t.ui.source}: {m.src}</p>
             <p class="text">{m.text}</p>
           </li>
         ))

@@ -5,29 +5,19 @@
  * Generated originals are stored in assets/elementos-ia, optimized to 4:5 WebP.
  */
 
-const elements = [
-  {
-    img: 'retratos', name: 'Retratos', text: 'Dicen a quién se honra en la ofrenda.', x: 30, y: 2, r: -4,
-  },
-  {
-    img: 'veladoras', name: 'Veladoras', text: 'Guían a las ánimas hacia la ofrenda.', x: 64, y: 6, r: 5,
-  },
-  {
-    img: 'pan-de-muerto', name: 'Comida y agua', text: 'Sacian el hambre y la sed que traen las ánimas después de su largo recorrido.', x: 4, y: 30, r: 3,
-  },
-  {
-    img: 'cempasuchil', name: 'Cempasúchil', text: 'Sus flores marcan el camino desde la entrada de la casa hasta el altar.', x: 40, y: 34, r: -6,
-  },
-  {
-    img: 'copal', name: 'Incienso y copal', text: 'Aromatizan el espacio y alejan a los malos espíritus.', x: 70, y: 40, r: 4,
-  },
-  {
-    img: 'papel-picado', name: 'Papel picado', text: 'Aporta color a la ofrenda y representa el viento.', x: 16, y: 58, r: -3,
-  },
-  {
-    img: 'calaverita', name: 'Calaveritas y pan de muerto', text: 'Aparecen en casi cualquier ofrenda, sin importar la región.', x: 52, y: 62, r: 6,
-  },
+const t = strings(Astro.currentLocale).elementos;
+const ui = strings(Astro.currentLocale).ui;
+// Where each print lands on the collage; names and meanings come from the language
+const PRINTS = [
+  { img: 'retratos', x: 30, y: 2, r: -4 },
+  { img: 'veladoras', x: 64, y: 6, r: 5 },
+  { img: 'pan-de-muerto', x: 4, y: 30, r: 3 },
+  { img: 'cempasuchil', x: 40, y: 34, r: -6 },
+  { img: 'copal', x: 70, y: 40, r: 4 },
+  { img: 'papel-picado', x: 16, y: 58, r: -3 },
+  { img: 'calaverita', x: 52, y: 62, r: 6 },
 ];
+const elements = PRINTS.map((p, i) => ({ ...p, ...t.items[i] }));
 
 const INTRO = 0.1;
 const STEP = (1 - INTRO) / elements.length;
@@ -35,6 +25,7 @@ const at = elements.map((_, i) => INTRO + i * STEP);
 const beat = (i: number) =>
   i === elements.length - 1 ? at[i].toFixed(3) : `${at[i].toFixed(3)} ${at[i + 1].toFixed(3)}`;
 import Marco from '../Marco.astro';
+import { strings } from '../../i18n';
 ---
 
 <section
@@ -60,9 +51,9 @@ import Marco from '../Marco.astro';
 
     <ol class="captions stack">
       <li class="beat intro" data-beat={`0 ${INTRO.toFixed(3)}`}>
-        <p class="mono">Elementos de la ofrenda</p>
-        <h2>Siete cosas que comparten casi todas las ofrendas</h2>
-        <p class="text">Hay variaciones en cada región, pero según el INAH estos elementos aparecen en la mayoría de los altares.</p>
+        <p class="mono">{t.kicker}</p>
+        <h2>{t.title}</h2>
+        <p class="text">{t.text}</p>
       </li>
       {
         elements.map((e, i) => (
@@ -71,9 +62,9 @@ import Marco from '../Marco.astro';
             <h2>{e.name}</h2>
             <p class="text">{e.text}</p>
             <p class="mono credit">
-              Imagen generada con IA.
+              {ui.aiImage}
             </p>
-            {i === elements.length - 1 && <p class="mono source">Fuente: INAH, «Ofrendas para los muertos»</p>}
+            {i === elements.length - 1 && <p class="mono source">{t.source}</p>}
           </li>
         ))
       }

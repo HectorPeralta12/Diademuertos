@@ -1,0 +1,272 @@
+---
+/**
+ * Where to celebrate in Prague: this season's events, from src/data/eventos.ts.
+ * A plain reading section like the questions, over the painted night sky.
+ */
+import { lang as toLang, strings } from '../../i18n';
+import { EVENTOS } from '../../data/eventos';
+import Marco from '../Marco.astro';
+
+const code = toLang(Astro.currentLocale);
+const t = strings(Astro.currentLocale).eventos;
+
+const parse = (iso: string) => {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d));
+};
+
+/** "sábado 31 de octubre", "Saturday, October 31", "sobota 31. října" */
+function longDay(iso: string) {
+  const date = parse(iso);
+  const wd = t.weekdays[date.getUTCDay()];
+  const d = date.getUTCDate();
+  const m = t.months[date.getUTCMonth()];
+  if (code === 'en') return `${wd}, ${m} ${d}`;
+  if (code === 'cs') return `${wd} ${d}. ${m}`;
+  return `${wd} ${d} de ${m}`;
+}
+const joinDays = (days: string[]) => days.map(longDay).join(code === 'en' ? ' and ' : code === 'cs' ? ' a ' : ' y ');
+
+/** The big date on the card: "31.10" or "31.10–1.11" */
+const shortDay = (iso: string) => {
+  const date = parse(iso);
+  return `${date.getUTCDate()}.${date.getUTCMonth() + 1}`;
+};
+
+const mapUrl = (venue: string, address: string) =>
+  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${venue}, ${address}`)}`;
+---
+
+<section class="flow eventos" id="eventos" data-scene="eventos" data-theme="noche" data-chapter="eventos">
+  <Marco corners={['bl', 'br']} seed={13} />
+  <div class="inner">
+    <header>
+      <p class="mono kicker">{t.kicker}</p>
+      <h2>{t.title}</h2>
+      <p class="intro">{t.text}</p>
+    </header>
+
+    <ol class="cards">
+      {
+        EVENTOS.map((e) => (
+          <li class="card">
+            <p class="date" aria-hidden="true">
+              {e.days.length > 1 ? `${shortDay(e.days[0])}–${shortDay(e.days[e.days.length - 1])}` : shortDay(e.days[0])}
+            </p>
+            <div class="body">
+              <h3>{e.name[code]}</h3>
+              <dl>
+                <div>
+                  <dt class="mono">{t.when}</dt>
+                  <dd>
+                    {joinDays(e.days)} · {e.hours}
+                  </dd>
+                </div>
+                <div>
+                  <dt class="mono">{t.where}</dt>
+                  <dd>
+                    {e.venue}, {e.address} ·{' '}
+                    <a href={mapUrl(e.venue, e.address)} target="_blank" rel="noopener">
+                      {t.map}
+                    </a>
+                  </dd>
+                </div>
+                <div>
+                  <dt class="mono">{t.price}</dt>
+                  <dd>{e.price[code]}</dd>
+                </div>
+              </dl>
+              <p class="summary">{e.summary[code]}</p>
+              <a class="btn btn--ghost" href={e.site} target="_blank" rel="noopener">
+                {t.site}
+                <svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M200,64V168a8,8,0,0,1-16,0V83.31L69.66,197.66a8,8,0,0,1-11.32-11.32L172.69,72H88a8,8,0,0,1,0-16H192A8,8,0,0,1,200,64Z" /></svg>
+              </a>
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+
+    <p class="mono checked">{t.checked}</p>
+  </div>
+</section>
+
+<script>
+  import { $$ } from '../../scripts/dom';
+
+  // Cards fade up as they enter the viewport
+  const rows = $$('.eventos header, .eventos .card');
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        entry.target.classList.add('is-in');
+        io.unobserve(entry.target);
+      }
+    },
+    { rootMargin: '0px 0px -10% 0px' },
+  );
+  rows.forEach((row, i) => {
+    (row as HTMLElement).style.transitionDelay = `${Math.min(i, 4) * 80}ms`;
+    io.observe(row);
+  });
+</script>
+
+<style>
+  .eventos {
+    position: relative;
+    isolation: isolate;
+    min-height: 100vh;
+    padding: 128px var(--gutter) 96px;
+  }
+
+  .inner {
+    display: grid;
+    gap: 48px;
+    max-width: 1120px;
+    margin: 0 auto;
+  }
+
+  .kicker {
+    color: var(--accent);
+  }
+
+  h2 {
+    margin-top: 12px;
+    max-width: 680px;
+    font-size: var(--t-5xl);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  .intro {
+    margin-top: 16px;
+    max-width: 560px;
+    font-size: var(--t-xl);
+    line-height: 28px;
+    font-weight: 300;
+    color: var(--fg-dim);
+  }
+
+  .cards {
+    display: grid;
+    gap: 24px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* A card of night glass, so the painted sky still shows through */
+  .card {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 7fr);
+    gap: 32px;
+    padding: 32px;
+    border-radius: 24px;
+    background: color-mix(in srgb, var(--noche) 72%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg) 12%, transparent);
+    backdrop-filter: blur(12px);
+  }
+
+  .date {
+    font-size: var(--t-5xl);
+    line-height: 1;
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  h3 {
+    font-size: var(--t-3xl);
+    line-height: 36px;
+    font-weight: 400;
+  }
+
+  dl {
+    display: grid;
+    gap: 12px;
+    margin: 24px 0 0;
+  }
+  dl div {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 16px;
+    align-items: baseline;
+  }
+  dt {
+    color: var(--fg-dim);
+  }
+  dd {
+    margin: 0;
+    font-size: var(--t-base);
+    line-height: 24px;
+  }
+  dd a {
+    color: var(--accent);
+  }
+
+  .summary {
+    margin-top: 24px;
+    font-size: var(--t-base);
+    line-height: 24px;
+    color: var(--fg-dim);
+  }
+
+  .card .btn {
+    margin-top: 24px;
+  }
+
+  .checked {
+    color: var(--fg-dim);
+    max-width: 680px;
+  }
+
+  /* Entrance: a gentle, heavy fade up */
+  .js .eventos header,
+  .js .eventos .card {
+    opacity: 0;
+    transform: translateY(32px);
+    filter: blur(8px);
+    transition:
+      opacity 800ms var(--ease),
+      transform 900ms var(--ease),
+      filter 800ms var(--ease);
+  }
+  .js .eventos .is-in {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+
+  @media (max-width: 767px) {
+    .eventos {
+      padding-top: 96px;
+    }
+    h2 {
+      font-size: var(--t-4xl);
+      line-height: 40px;
+    }
+    .card {
+      grid-template-columns: 1fr;
+      gap: 16px;
+      padding: 24px;
+    }
+    .date {
+      font-size: var(--t-4xl);
+    }
+    dl div {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .js .eventos header,
+    .js .eventos .card {
+      transform: none;
+      filter: none;
+      transition: opacity 200ms linear;
+    }
+  }
+</style>

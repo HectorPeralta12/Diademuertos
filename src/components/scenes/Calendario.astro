@@ -1,4 +1,5 @@
 ---
+import { strings } from '../../i18n';
 /**
  * Before November: a year drawn as a ring. The Mexica feasts for the dead
  * light up where INAH places them, and then the two Catholic dates that the
@@ -6,7 +7,8 @@
  */
 
 const C = 200;
-const months = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+const t = strings(Astro.currentLocale).calendario;
+const months = t.months;
 const angle = (m: number) => (m / 12) * Math.PI * 2 - Math.PI / 2;
 const point = (m: number, r: number) => [C + r * Math.cos(angle(m)), C + r * Math.sin(angle(m))].map((n) => n.toFixed(2));
 const arc = (from: number, to: number, r: number) => {
@@ -16,32 +18,14 @@ const arc = (from: number, to: number, r: number) => {
   return `M${x1} ${y1}A${r} ${r} 0 ${large} 1 ${x2} ${y2}`;
 };
 
-const feasts = [
-  {
-    name: 'Miccailhuitontli',
-    when: 'Agosto y septiembre',
-    text: 'La fiesta menor de los muertos, dedicada a los niños que morían.',
-    from: 7.05, to: 8.95, r: 168,
-  },
-  {
-    name: 'Huey Miccailhuitl',
-    when: 'Agosto y septiembre',
-    text: 'La fiesta mayor, para los guerreros muertos que moraban en la casa del Sol.',
-    from: 7.05, to: 8.95, r: 148,
-  },
-  {
-    name: 'Tepeilhuitl',
-    when: 'Octubre y noviembre',
-    text: 'Dedicada a los cerros y a las deidades del agua. Se hacían imágenes de quienes morían ahogados o por enfermedades ligadas al agua.',
-    from: 9.05, to: 10.95, r: 168,
-  },
-  {
-    name: 'Tititl',
-    when: 'Desde el solsticio de invierno',
-    text: 'Cerraba el año solar. Se hacían imágenes de quienes tuvieron muerte natural, cuyo destino era el Mictlan, y luego se quemaban.',
-    from: 11.3, to: 12.95, r: 168,
-  },
+// The Nahuatl names stay; when and what come from the language
+const ARCS = [
+  { name: 'Miccailhuitontli', from: 7.05, to: 8.95, r: 168 },
+  { name: 'Huey Miccailhuitl', from: 7.05, to: 8.95, r: 148 },
+  { name: 'Tepeilhuitl', from: 9.05, to: 10.95, r: 168 },
+  { name: 'Tititl', from: 11.3, to: 12.95, r: 168 },
 ];
+const feasts = ARCS.map((a, i) => ({ ...a, ...t.feasts[i] }));
 
 const INTRO = 0.12;
 const step = (0.82 - INTRO) / feasts.length;
@@ -77,15 +61,15 @@ import Marco from '../Marco.astro';
       }
       <g class="nov" style={`--at: ${CATHOLIC}`}>
         <circle cx={nx} cy={ny} r="7" />
-        <text x={lx} y={ly} class="nov-label">1–2 NOV</text>
+        <text x={lx} y={ly} class="nov-label">{t.nov}</text>
       </g>
     </svg>
 
     <ol class="captions stack">
       <li class="beat" data-beat={`0 ${INTRO.toFixed(3)}`}>
-        <p class="mono">Antes de noviembre</p>
-        <h2>Los mexicas recordaban a sus muertos en otras fechas</h2>
-        <p class="text">Su calendario solar de 365 días se dividía en 18 veintenas. Varias estaban dedicadas a los difuntos, según cómo habían muerto.</p>
+        <p class="mono">{t.intro.kicker}</p>
+        <h2>{t.intro.title}</h2>
+        <p class="text">{t.intro.text}</p>
       </li>
       {
         feasts.map((f, i) => (
@@ -97,10 +81,10 @@ import Marco from '../Marco.astro';
         ))
       }
       <li class="beat" data-beat={CATHOLIC.toFixed(3)} data-theme="morado">
-        <p class="mono">1 y 2 de noviembre</p>
-        <h2>Las fechas de hoy vienen de otro calendario</h2>
-        <p class="text">Para el arqueólogo Víctor Joel Santos Ramírez, del INAH, estas veintenas no dieron origen al Día de Muertos novohispano: sus fechas llegaron con la Iglesia católica.</p>
-        <p class="mono source">Fuente: INAH, «El origen del Día de Muertos» (2023)</p>
+        <p class="mono">{t.catholic.kicker}</p>
+        <h2>{t.catholic.title}</h2>
+        <p class="text">{t.catholic.text}</p>
+        <p class="mono source">{t.catholic.source}</p>
       </li>
     </ol>
   </div>

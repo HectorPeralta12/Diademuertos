@@ -15,8 +15,11 @@ const flags = [
   { color: '#ffd27a', motif: 'flor' },
 ];
 
-const word = 'el viento'.split('');
 import Marco from '../Marco.astro';
+import { strings } from '../../i18n';
+
+const t = strings(Astro.currentLocale).papel;
+const word = t.word.split('');
 ---
 
 <section class="scene papel" data-scene="papel" data-theme="rosa" data-chapter="elementos" style="--len: 320">
@@ -64,9 +67,9 @@ import Marco from '../Marco.astro';
     </p>
 
     <div class="caption">
-      <h2 class="sr-only">El viento</h2>
-      <p class="text">El papel picado da color a la ofrenda y representa el viento.</p>
-      <p class="mono source">Fuente: INAH, «Ofrendas para los muertos»</p>
+      <h2 class="sr-only">{t.title}</h2>
+      <p class="text">{t.text}</p>
+      <p class="mono source">{t.source}</p>
     </div>
   </div>
 </section>

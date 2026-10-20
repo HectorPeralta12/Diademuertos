@@ -1,0 +1,40 @@
+---
+/**
+ * The whole page, the same in every language: each scene reads its copy from
+ * Astro.currentLocale. src/pages/index.astro, en/ and cs/ only mount it.
+ */
+import Layout from '../layouts/Layout.astro';
+import Inicio from './scenes/Inicio.astro';
+import Ofrenda from './scenes/Ofrenda.astro';
+import Lema from './scenes/Lema.astro';
+import Elementos from './scenes/Elementos.astro';
+import PapelPicado from './scenes/PapelPicado.astro';
+import Camino from './scenes/Camino.astro';
+import Calendario from './scenes/Calendario.astro';
+import Historia from './scenes/Historia.astro';
+import Eventos from './scenes/Eventos.astro';
+import Preguntas from './scenes/Preguntas.astro';
+import Cierre from './scenes/Cierre.astro';
+import Guia from './Guia.astro';
+---
+
+<Layout>
+  <main>
+    <Inicio />
+    <Ofrenda />
+    <Lema />
+    <Elementos />
+    <PapelPicado />
+    <Camino />
+    <Calendario />
+    <Historia />
+    <Eventos />
+    <Preguntas />
+    <Cierre />
+  </main>
+  <Guia />
+</Layout>
+
+<script>
+  import '../scripts/scenes';
+</script>

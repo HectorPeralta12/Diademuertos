@@ -5,39 +5,20 @@
  * is the same pixels, so the flights have no seams to hide.
  */
 
+import { strings } from '../../i18n';
+
 // The light copy (already loaded by the opening) shows first; the 4K one takes over when ready
 const IMAGE = { src: '/images/altar-general.webp', hd: '/images/altar-general-4k.webp' };
 
-const views = [
-  {
-    rect: [0, 0, 1],
-    rectMobile: [0, 0, 1],
-    label: 'La ofrenda',
-    title: 'Un altar para recibirlos',
-    text: 'Unos días antes del 1 de noviembre, muchas casas levantan su ofrenda para que esté lista cuando lleguen las ánimas. Es una de las costumbres más extendidas de la fiesta.',
-  },
-  {
-    rect: [0.17, 0.55, 0.45],
-    rectMobile: [0.21, 0.64, 0.36],
-    label: 'Flores, velas y copal',
-    title: 'Luz y aroma para encontrar el camino',
-    text: 'Las veladoras guían a las ánimas hasta la ofrenda. El cempasúchil marca el camino desde la entrada de la casa, y el incienso y el copal aromatizan y alejan a los malos espíritus.',
-  },
-  {
-    rect: [0.36, 0.48, 0.36],
-    rectMobile: [0.36, 0.54, 0.36],
-    label: 'Comida y agua',
-    title: 'Para el hambre y la sed del viaje',
-    text: 'Se sirve comida y agua para saciar el hambre y la sed que traen las ánimas después de su largo recorrido. No faltan el pan de muerto ni las calaveritas de azúcar.',
-  },
-  {
-    rect: [0.15, 0.02, 0.62],
-    rectMobile: [0.24, 0.17, 0.62],
-    label: 'Retratos y papel picado',
-    title: 'Sus rostros, en lo más alto',
-    text: 'El retrato dice a quién se honra. El papel picado da color y representa el viento. Se suman objetos que la persona quería; para los niños, sus juguetes favoritos.',
-  },
+const t = strings(Astro.currentLocale).ofrenda;
+// Camera framings (x, y, width) for each view; the words come from the language
+const FRAMES = [
+  { rect: [0, 0, 1], rectMobile: [0, 0, 1] },
+  { rect: [0.17, 0.55, 0.45], rectMobile: [0.21, 0.64, 0.36] },
+  { rect: [0.36, 0.48, 0.36], rectMobile: [0.36, 0.54, 0.36] },
+  { rect: [0.15, 0.02, 0.62], rectMobile: [0.24, 0.17, 0.62] },
 ];
+const views = FRAMES.map((f, i) => ({ ...f, ...t.views[i] }));
 
 // Scroll weights: each view holds for HOLD, each flight takes FLY
 const HOLD = 1;
@@ -91,7 +72,7 @@ const beat = (i: number) => {
             </p>
             <h2>{v.title}</h2>
             <p class="text">{v.text}</p>
-            {i === views.length - 1 && <p class="mono source">Fuente: INAH, «Ofrendas para los muertos»</p>}
+            {i === views.length - 1 && <p class="mono source">{t.source}</p>}
           </li>
         ))
       }

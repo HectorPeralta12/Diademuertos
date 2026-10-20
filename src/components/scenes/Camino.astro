@@ -12,6 +12,9 @@
  * painting's own coordinates (ART, 1200 × 480).
  */
 
+import { strings } from '../../i18n';
+
+const t = strings(Astro.currentLocale).camino;
 // The painting's field, its aspect is 2.5 : 1
 const ART = { w: 1200, h: 480 };
 ---
@@ -24,7 +27,7 @@ const ART = { w: 1200, h: 480 };
         src="/images/camino-2800.webp"
         srcset="/images/camino-1600.webp 1600w, /images/camino-2800.webp 2800w, /images/camino-4000.webp 4000w"
         sizes="max(100vw, 250lvh)"
-        alt="Una casa con su farol encendido y un camino de pétalos de cempasúchil que lleva, bajo la luna, hasta un altar lleno de flores y veladoras"
+        alt={t.alt}
         width="4000"
         height="1600"
         fetchpriority="low"
@@ -36,24 +39,16 @@ const ART = { w: 1200, h: 480 };
     <canvas class="capa" data-polvo aria-hidden="true"></canvas>
 
     <ol class="captions stack">
-      <li class="beat" data-beat="0 0.34">
-        <p class="mono">El camino</p>
-        <h2>De la puerta de la casa al altar</h2>
-        <p class="text">Las flores de cempasúchil marcan el camino desde la entrada de la casa hasta la ofrenda.</p>
-        <p class="mono source">Fuente: INAH</p>
-      </li>
-      <li class="beat" data-beat="0.34 0.76">
-        <p class="mono">El color</p>
-        <h2>Un pedazo de sol en el suelo</h2>
-        <p class="text">Su amarillo se asocia con el sol, que guía el alma de los difuntos.</p>
-        <p class="mono source">Fuente: Secretaría de Cultura</p>
-      </li>
-      <li class="beat" data-beat="0.76">
-        <p class="mono">La llegada</p>
-        <h2>Y las veladoras las reciben</h2>
-        <p class="text">Las veladoras guían a las ánimas hasta la ofrenda.</p>
-        <p class="mono source">Fuente: INAH</p>
-      </li>
+      {
+        t.beats.map((b, i) => (
+          <li class="beat" data-beat={['0 0.34', '0.34 0.76', '0.76'][i]}>
+            <p class="mono">{b.kicker}</p>
+            <h2>{b.title}</h2>
+            <p class="text">{b.text}</p>
+            <p class="mono source">{b.source}</p>
+          </li>
+        ))
+      }
     </ol>
   </div>
 </section>

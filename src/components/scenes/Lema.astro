@@ -6,9 +6,10 @@
  * the page. Everything follows --p; the gold dust is the only JavaScript.
  */
 import { XOLO_BOX as BOX, XOLO_D } from '../../scripts/xolo-path';
+import { strings } from '../../i18n';
 import Marco from '../Marco.astro';
 
-const lines = ['Mientras alguien los recuerde,', 'siguen encontrando', 'el camino a casa.'];
+const lines = strings(Astro.currentLocale).lema.lines;
 
 let n = 0;
 const words = lines.map((line) => line.split(' ').map((w) => ({ w, i: n++ })));

@@ -15,6 +15,8 @@ const HOLD = 0.28;
 // as fractions of each painting
 const STAR = { x: 0.2105, y: 0.1254 };
 const ALTAR_TOP = { x: 0.548, y: 0.24 };
+import { strings } from '../../i18n';
+const t = strings(Astro.currentLocale).inicio;
 ---
 
 <section data-pintada class="scene inicio" id="inicio" data-scene="inicio" data-theme="noche" data-chapter="ofrenda" style="--len: 380" data-hold={HOLD}>
@@ -34,15 +36,15 @@ const ALTAR_TOP = { x: 0.548, y: 0.24 };
     <div class="shade" aria-hidden="true"></div>
 
     <div class="copy" id="contenido">
-      <p class="mono kicker">1 y 2 de noviembre</p>
-      <h1>Día de<br />Muertos</h1>
-      <p class="lead">Una ofrenda para quienes vuelven a casa. <br />Recórrela nivel por nivel.</p>
+      <p class="mono kicker">{t.kicker}</p>
+      <h1>{t.title[0]}<br />{t.title[1]}</h1>
+      <p class="lead">{t.lead[0]} <br />{t.lead[1]}</p>
       <div class="actions">
         <a class="btn btn--primary" href="#ofrenda">
-          Recorrer la ofrenda
+          {t.cta}
           <svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M205.66,149.66l-72,72a8,8,0,0,1-11.32,0l-72-72a8,8,0,0,1,11.32-11.32L120,196.69V40a8,8,0,0,1,16,0V196.69l58.34-58.35a8,8,0,0,1,11.32,11.32Z" /></svg>
         </a>
-        <p class="mono proof">Con información del INAH y la UNESCO</p>
+        <p class="mono proof">{t.proof}</p>
       </div>
     </div>
   </div>
@@ -186,6 +188,7 @@ const ALTAR_TOP = { x: 0.548, y: 0.24 };
   .copy {
     position: absolute;
     left: var(--gutter);
+    right: var(--gutter);
     bottom: calc(96px + var(--chrome));
     max-width: 680px;
     opacity: calc(1 - var(--p) * 4.5);

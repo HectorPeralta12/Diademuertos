@@ -1,4 +1,5 @@
 ---
+import { BASE } from '../../scripts/base';
 /**
  * The elements of the altar, as realistic AI-generated images that drop onto a sheet of
  * amate paper one by one. Each lands with its meaning, as INAH describes it.
@@ -43,7 +44,7 @@ import { strings } from '../../i18n';
       {
         elements.map((e) => (
           <figure class="print" style={`--x: ${e.x}%; --y: ${e.y}%; --r: ${e.r}deg`} data-print>
-            <img src={`/images/elementos-ia/${e.img}.webp`} srcset={`/images/elementos-ia/${e.img}-360.webp 360w, /images/elementos-ia/${e.img}.webp 720w`} sizes="(max-width: 700px) 30vw, 240px" alt="" loading="lazy" decoding="async" width="720" height="900" />
+            <img src={`${BASE}/images/elementos-ia/${e.img}.webp`} srcset={`${BASE}/images/elementos-ia/${e.img}-360.webp 360w, ${BASE}/images/elementos-ia/${e.img}.webp 720w`} sizes="(max-width: 700px) 30vw, 240px" alt="" loading="lazy" decoding="async" width="720" height="900" />
           </figure>
         ))
       }

@@ -13,6 +13,7 @@
  */
 import { marigold, LOOSE_PETALS, EDGE } from './marigold';
 import piezas from './cempasuchil.json';
+import { withBase } from './base';
 
 const load = (src: string) => {
   const img = new Image();
@@ -21,8 +22,8 @@ const load = (src: string) => {
   return img;
 };
 // Painted heads seen from above, and loose petals
-const PAINTED_HEADS = [...piezas.flor, ...piezas.florcita].map((p) => load(p.src));
-const PAINTED_PETALS = piezas.petalo.map((p) => load(p.src));
+const PAINTED_HEADS = [...piezas.flor, ...piezas.florcita].map((p) => load(withBase(p.src)));
+const PAINTED_PETALS = piezas.petalo.map((p) => load(withBase(p.src)));
 const ready = (img: HTMLImageElement) => img.complete && img.naturalWidth > 0;
 
 const PETAL_TONES = ['#f7a21b', '#ef8817', '#dc6410', '#ffb23f', '#fbb12b'];

@@ -3,6 +3,9 @@ import { defineConfig, fontProviders } from 'astro/config';
 
 export default defineConfig({
   output: 'static',
+  // Published on GitHub Pages: https://hectorperalta12.github.io/Diademuertos/
+  site: 'https://hectorperalta12.github.io',
+  base: '/Diademuertos',
   // Spanish at /, English at /en/, Czech at /cs/ (copy in src/i18n)
   i18n: {
     defaultLocale: 'es',

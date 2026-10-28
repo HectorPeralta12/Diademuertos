@@ -1,4 +1,5 @@
 ---
+import { BASE } from '../scripts/base';
 /**
  * The guide: after the crossing, the Xolo of light walks along the bottom of
  * the screen through the 2D half of the page. Where it stands is how far along
@@ -8,7 +9,7 @@
  * Frames come from scripts/xolo-guia.mjs.
  */
 // Walk cycle over the three poses: stride, passing, the other stride, passing
-const FRAMES = ['/images/guia/paso-2.webp', '/images/guia/paso-1.webp', '/images/guia/paso-3.webp'];
+const FRAMES = [`${BASE}/images/guia/paso-2.webp`, `${BASE}/images/guia/paso-1.webp`, `${BASE}/images/guia/paso-3.webp`];
 ---
 
 <div class="guia" aria-hidden="true" data-guia>

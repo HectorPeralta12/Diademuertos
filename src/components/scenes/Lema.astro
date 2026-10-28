@@ -1,4 +1,5 @@
 ---
+import { BASE } from '../../scripts/base';
 /**
  * Tagline and crossing. The words light up one by one while the painted Xolo
  * sits below them, looking up. Then its outline is drawn in gold, the paint
@@ -41,7 +42,7 @@ const EYE = { x: 1212, y: 352 };
         <defs>
           <!-- The dog cut out of the painting by color (scripts/xolo-mask.mjs) -->
           <mask id="xolo-recorte" maskUnits="userSpaceOnUse" x={BOX.x} y={BOX.y} width={BOX.w} height={BOX.h}>
-            <image href="/images/xolo-mascara.png" x={BOX.x} y={BOX.y} width={BOX.w} height={BOX.h} />
+            <image href={`${BASE}/images/xolo-mascara.png`} x={BOX.x} y={BOX.y} width={BOX.w} height={BOX.h} />
           </mask>
           <radialGradient id="xolo-luz" cx="1250" cy="520" r="360" gradientUnits="userSpaceOnUse">
             <stop offset="0" stop-color="#fff6d6" />
@@ -77,12 +78,12 @@ const EYE = { x: 1212, y: 352 };
           <rect class="espiritu" x={BOX.x} y={BOX.y} width={BOX.w} height={BOX.h} fill="url(#xolo-luz)" mask="url(#xolo-recorte)" />
           <!-- Blend on the group: a masked group is isolated, so blending inside it would see nothing -->
           <g class="relieve" mask="url(#xolo-recorte)">
-            <image href="/images/xolo-hero.webp" x="0" y="0" width="1672" height="941" filter="url(#xolo-relieve)" />
+            <image href={`${BASE}/images/xolo-hero.webp`} x="0" y="0" width="1672" height="941" filter="url(#xolo-relieve)" />
           </g>
           <ellipse class="ojo" cx={EYE.x} cy={EYE.y} rx="5.5" ry="4" transform={`rotate(-12 ${EYE.x} ${EYE.y})`} />
 
           <!-- The painted Xolo, cut out of the opening illustration -->
-          <image class="pintura" href="/images/xolo-hero.webp" x="0" y="0" width="1672" height="941" mask="url(#xolo-recorte)" />
+          <image class="pintura" href={`${BASE}/images/xolo-hero.webp`} x="0" y="0" width="1672" height="941" mask="url(#xolo-recorte)" />
           <!-- Storybook ink line around the painting -->
           <path class="tinta" d={XOLO_D} />
           <!-- The gold line that draws itself -->

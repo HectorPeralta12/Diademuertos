@@ -8,12 +8,13 @@
 
 import { drawSparkle, twinkle } from './sparkle';
 import piezas from './cempasuchil.json';
+import { withBase } from './base';
 
 // Painted petals from the cempasúchil sheet; a drawn petal stands in until they load
 const PAINTED = piezas.petalo.map((p) => {
   const img = new Image();
   img.decoding = 'async';
-  img.src = p.src;
+  img.src = withBase(p.src);
   return img;
 });
 

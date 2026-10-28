@@ -1,4 +1,5 @@
 ---
+import { BASE } from '../../scripts/base';
 /**
  * The altar, level by level. One painting of the whole altar, upscaled to 4K,
  * and a camera that zooms between four regions of it as you scroll. Every view
@@ -8,7 +9,7 @@
 import { strings } from '../../i18n';
 
 // The light copy (already loaded by the opening) shows first; the 4K one takes over when ready
-const IMAGE = { src: '/images/altar-general.webp', hd: '/images/altar-general-4k.webp' };
+const IMAGE = { src: `${BASE}/images/altar-general.webp`, hd: `${BASE}/images/altar-general-4k.webp` };
 
 const t = strings(Astro.currentLocale).ofrenda;
 // Camera framings (x, y, width) for each view; the words come from the language

@@ -1,4 +1,5 @@
 ---
+import { BASE } from '../scripts/base';
 import { Font } from 'astro:assets';
 import { LANGS, homeOf, lang, strings } from '../i18n';
 
@@ -18,16 +19,16 @@ const chapters = (['ofrenda', 'elementos', 'historia', 'eventos', 'preguntas'] a
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="theme-color" content="#100c1f" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href={`${BASE}/favicon.svg`} />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content={t.meta.ogLocale} />
     {LANGS.map((l) => <link rel="alternate" hreflang={l.code} href={new URL(homeOf(l.code), Astro.site ?? Astro.url).href} />)}
     <link rel="alternate" hreflang="x-default" href={new URL('/', Astro.site ?? Astro.url).href} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content="/images/xolo-hero.webp" />
+    <meta property="og:image" content={new URL(`${BASE}/images/xolo-hero.webp`, Astro.site ?? Astro.url).href} />
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="preload" as="image" href="/images/xolo-hero.webp" imagesrcset="/images/xolo-hero.webp 1672w, /images/xolo-hero@2x.webp 3344w" imagesizes="max(100vw, 177.7vh)" />
+    <link rel="preload" as="image" href={`${BASE}/images/xolo-hero.webp`} imagesrcset={`${BASE}/images/xolo-hero.webp 1672w, ${BASE}/images/xolo-hero@2x.webp 3344w`} imagesizes="max(100vw, 177.7vh)" />
     <Font cssVariable="--font-jost" preload={[{ weight: '300 600', style: 'normal' }]} />
     <Font cssVariable="--font-geist-mono" />
   </head>
@@ -40,8 +41,8 @@ const chapters = (['ofrenda', 'elementos', 'historia', 'eventos', 'preguntas'] a
     <div class="cielo" aria-hidden="true">
       <img
         class="pintura"
-        src="/images/cielo-900.webp"
-        srcset="/images/cielo-900.webp 900w, /images/cielo-1600.webp 1600w"
+        src={`${BASE}/images/cielo-900.webp`}
+        srcset={`${BASE}/images/cielo-900.webp 900w, ${BASE}/images/cielo-1600.webp 1600w`}
         sizes="100vw"
         alt=""
         width="1600"

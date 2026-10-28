@@ -6,6 +6,7 @@
 import es from './es';
 import en from './en';
 import cs from './cs';
+import { withBase } from '../scripts/base';
 
 export type Strings = typeof es;
 export type Lang = 'es' | 'en' | 'cs';
@@ -23,4 +24,4 @@ export const lang = (locale: string | undefined): Lang => (locale === 'en' || lo
 export const strings = (locale: string | undefined) => all[lang(locale)];
 
 /** The home of a language */
-export const homeOf = (code: Lang) => (code === 'es' ? '/' : `/${code}/`);
+export const homeOf = (code: Lang) => withBase(code === 'es' ? '/' : `/${code}/`);

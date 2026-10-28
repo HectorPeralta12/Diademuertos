@@ -39,11 +39,19 @@ const FRAMES = [`${BASE}/images/guia/paso-2.webp`, `${BASE}/images/guia/paso-1.w
 
   let start = 0;
   let end = 1;
+  // The walk is measured once, so frames only write (reading layout after a
+  // write forces the browser to lay out the page again, every frame)
+  const walk = { left: 0, travel: 0, width: 0, height: 0, bottom: 0 };
   function measure() {
     const vh = window.innerHeight;
     // From the end of the crossing to the closing painting
     start = from.offsetTop + from.offsetHeight - vh * 1.05;
     end = to.offsetTop - vh * 0.6;
+    walk.left = xolo.offsetLeft;
+    walk.width = xolo.offsetWidth;
+    walk.height = xolo.offsetHeight;
+    walk.travel = guia.clientWidth - walk.width - walk.left * 2;
+    walk.bottom = xolo.offsetTop + walk.height;
   }
   measure();
   window.addEventListener('resize', measure);
@@ -71,13 +79,14 @@ const FRAMES = [`${BASE}/images/guia/paso-2.webp`, `${BASE}/images/guia/paso-1.w
     const p = (y - start) / (end - start);
     const on = p > -0.02 && p < 1.02;
     const t = Math.min(1, Math.max(0, p));
-    guia.style.setProperty('--viaje', String(t));
     const vh = window.innerHeight;
     let away = 0;
     if (camino) {
       const c = camino.getBoundingClientRect();
       away = Math.min(1, Math.max(0, Math.min((vh - c.top) / (vh * 0.5), c.bottom / (vh * 0.5))));
     }
+    const x = walk.travel * t;
+    guia.style.setProperty('--x', `${x.toFixed(1)}px`);
     const ver = Math.min(1, Math.max(0, Math.min((p + 0.02) / 0.04, (1.02 - p) / 0.04))) * (1 - away);
     guia.style.setProperty('--ver', String(ver));
 
@@ -103,14 +112,12 @@ const FRAMES = [`${BASE}/images/guia/paso-2.webp`, `${BASE}/images/guia/paso-1.w
 
     // Dust from the paws while walking, a slow shimmer while waiting
     if (on && ver > 0.05 && !reducedMotion) {
-      const r = xolo.getBoundingClientRect();
-      const g = guia.getBoundingClientRect();
       const walking = idle < 0.25;
       const n = walking ? 2 : Math.random() < 0.15 ? 1 : 0;
       for (let i = 0; i < n; i++) {
-        const x = r.left - g.left + r.width * (0.2 + Math.random() * 0.6);
-        const yy = walking ? r.bottom - g.top - 6 : r.top - g.top + r.height * (0.2 + Math.random() * 0.6);
-        dust.emit(x, yy, 1, walking ? 10 : 30);
+        const dx = walk.left + x + walk.width * (0.2 + Math.random() * 0.6);
+        const dy = walking ? walk.bottom - 6 : walk.bottom - walk.height * (0.8 - Math.random() * 0.6);
+        dust.emit(dx, dy, 1, walking ? 10 : 30);
       }
     }
     dust.step(dt);
@@ -131,7 +138,7 @@ const FRAMES = [`${BASE}/images/guia/paso-2.webp`, `${BASE}/images/guia/paso-1.w
 
 <style>
   .guia {
-    --viaje: 0;
+    --x: 0px;
     --ver: 0;
     --alto: 104px;
     position: fixed;
@@ -153,7 +160,10 @@ const FRAMES = [`${BASE}/images/guia/paso-2.webp`, `${BASE}/images/guia/paso-1.w
     --ancho: calc(var(--alto) * 370 / 328);
     position: absolute;
     bottom: 12px;
-    left: calc(var(--gutter) + (100% - var(--ancho) - var(--gutter) * 2) * var(--viaje));
+    left: var(--gutter);
+    /* Moved with translate, which the GPU does without laying out the page */
+    translate: var(--x) 0;
+    will-change: translate;
     width: var(--ancho);
     height: var(--alto);
     /* The poses face left; walking forward it faces right */

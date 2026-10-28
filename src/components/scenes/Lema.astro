@@ -16,8 +16,6 @@ let n = 0;
 const words = lines.map((line) => line.split(' ').map((w) => ({ w, i: n++ })));
 const total = n;
 
-// The eye, measured on the painting
-const EYE = { x: 1212, y: 352 };
 ---
 
 <section class="scene lema" data-scene="lema" data-theme="cempasuchil" data-chapter="ofrenda" style={`--len: 420; --n: ${total}`}>
@@ -38,58 +36,30 @@ const EYE = { x: 1212, y: 352 };
     </p>
 
     <figure class="cruce" aria-hidden="true">
-      <svg viewBox={`${BOX.x} ${BOX.y} ${BOX.w} ${BOX.h}`} data-box={JSON.stringify(BOX)}>
-        <defs>
-          <!-- The dog cut out of the painting by color (scripts/xolo-mask.mjs) -->
-          <mask id="xolo-recorte" maskUnits="userSpaceOnUse" x={BOX.x} y={BOX.y} width={BOX.w} height={BOX.h}>
-            <image href={`${BASE}/images/xolo-mascara.png`} x={BOX.x} y={BOX.y} width={BOX.w} height={BOX.h} />
-          </mask>
-          <radialGradient id="xolo-luz" cx="1250" cy="520" r="360" gradientUnits="userSpaceOnUse">
-            <stop offset="0" stop-color="#fff6d6" />
-            <stop offset="0.45" stop-color="#ffd06a" />
-            <stop offset="1" stop-color="#f29a1c" />
-          </radialGradient>
-          <filter id="xolo-halo" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="18" />
-          </filter>
-          <!-- The painting turned into light and shade, to give the spirit its volume -->
-          <filter id="xolo-relieve" color-interpolation-filters="sRGB">
-            <feColorMatrix type="saturate" values="0" />
-            <feComponentTransfer>
-              <feFuncR type="linear" slope="2.4" intercept="0.12" />
-              <feFuncG type="linear" slope="2.4" intercept="0.12" />
-              <feFuncB type="linear" slope="2.4" intercept="0.12" />
-            </feComponentTransfer>
-          </filter>
-          <filter id="xolo-brillo" x="-10%" y="-10%" width="120%" height="120%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="b" />
-            <feMerge>
-              <feMergeNode in="b" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
-        <g class="figura">
-          <!-- Spirit: a halo, then the body of light -->
-          <g class="halo" filter="url(#xolo-halo)">
-            <rect x={BOX.x} y={BOX.y} width={BOX.w} height={BOX.h} fill="#ffc45a" mask="url(#xolo-recorte)" />
-          </g>
-          <rect class="espiritu" x={BOX.x} y={BOX.y} width={BOX.w} height={BOX.h} fill="url(#xolo-luz)" mask="url(#xolo-recorte)" />
-          <!-- Blend on the group: a masked group is isolated, so blending inside it would see nothing -->
-          <g class="relieve" mask="url(#xolo-recorte)">
-            <image href={`${BASE}/images/xolo-hero.webp`} x="0" y="0" width="1672" height="941" filter="url(#xolo-relieve)" />
-          </g>
-          <ellipse class="ojo" cx={EYE.x} cy={EYE.y} rx="5.5" ry="4" transform={`rotate(-12 ${EYE.x} ${EYE.y})`} />
-
-          <!-- The painted Xolo, cut out of the opening illustration -->
-          <image class="pintura" href={`${BASE}/images/xolo-hero.webp`} x="0" y="0" width="1672" height="941" mask="url(#xolo-recorte)" />
-          <!-- Storybook ink line around the painting -->
-          <path class="tinta" d={XOLO_D} />
-          <!-- The gold line that draws itself -->
-          <path class="trazo" d={XOLO_D} pathLength="1" filter="url(#xolo-brillo)" data-trazo />
-        </g>
-      </svg>
+      <!-- The crossing is three baked pictures (scripts/xolo-capas.mjs) that only fade,
+           so phones composite it instead of repainting masks and blurs on every frame -->
+      <div class="figura">
+        {
+          ['halo', 'espiritu', 'pintura'].map((layer) => (
+            <img
+              class={layer}
+              src={`${BASE}/images/xolo-capas/${layer}.webp`}
+              srcset={`${BASE}/images/xolo-capas/${layer}.webp 520w, ${BASE}/images/xolo-capas/${layer}@2x.webp 1040w`}
+              sizes="min(100vw, 46vh)"
+              alt=""
+              width="520"
+              height="680"
+              loading="lazy"
+              decoding="async"
+            />
+          ))
+        }
+        <svg viewBox={`${BOX.x} ${BOX.y} ${BOX.w} ${BOX.h}`} data-box={JSON.stringify(BOX)}>
+          <!-- The gold line that draws itself, over a wider soft stroke for its glow -->
+          <path class="trazo trazo--brillo" d={XOLO_D} pathLength="1" />
+          <path class="trazo" d={XOLO_D} pathLength="1" data-trazo />
+        </svg>
+      </div>
       <canvas data-polvo></canvas>
     </figure>
   </div>
@@ -106,6 +76,9 @@ const EYE = { x: 1212, y: 352 };
   const box = JSON.parse(svg.dataset.box!);
   const dust = polvo($<HTMLCanvasElement>('[data-polvo]', scene)!, box);
   const length = line.getTotalLength();
+  // The outline sampled once: measuring the path on every frame is slow on phones
+  const POINTS = Array.from({ length: 800 }, (_, i) => line.getPointAtLength((i / 800) * length));
+  const pointAt = (t: number) => POINTS[Math.min(POINTS.length - 1, Math.floor(t * POINTS.length))];
 
   let p = 0;
   let lastTrace = 0;
@@ -133,7 +106,7 @@ const EYE = { x: 1212, y: 352 };
       const from = Math.min(lastTrace, trace);
       const to = Math.max(lastTrace, trace);
       for (let t = from; t <= to; t += 0.004) {
-        const pt = line.getPointAtLength(t * length);
+        const pt = pointAt(t);
         dust.emit(pt.x, pt.y, 2, 4);
       }
     }
@@ -145,7 +118,7 @@ const EYE = { x: 1212, y: 352 };
       const rate = 1 + Math.round(segment(p, 0.76, 1) * 3);
       for (let i = 0; i < rate; i++) {
         if (Math.random() < 0.6) {
-          const pt = line.getPointAtLength(Math.random() * length);
+          const pt = pointAt(Math.random());
           dust.emit(pt.x, pt.y - segment(p, 0.76, 1) * 40, 1, 10);
         }
       }
@@ -206,33 +179,29 @@ const EYE = { x: 1212, y: 352 };
     margin-top: 16px;
     opacity: var(--show);
   }
-  .cruce svg,
+  .figura,
+  .figura > *,
   .cruce canvas {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
   }
+  .figura img {
+    object-fit: contain;
+    will-change: opacity;
+  }
   .cruce canvas {
     pointer-events: none;
   }
 
   .figura {
-    transform: translateY(calc(var(--lift) * -28px));
+    transform: translateY(calc(var(--lift) * -4%));
     transition: transform 400ms var(--ease);
   }
 
   .pintura {
     opacity: calc(1 - var(--fade));
-  }
-
-  .tinta {
-    fill: none;
-    stroke: #24110f;
-    stroke-width: 1.4;
-    stroke-linejoin: round;
-    opacity: calc(0.55 * (1 - var(--fade)));
-    filter: url(#trazo);
   }
 
   .trazo {
@@ -246,26 +215,19 @@ const EYE = { x: 1212, y: 352 };
     /* Hidden until the line starts, so its round cap does not show as a dot */
     opacity: min(1, calc(var(--trace) * 40));
   }
+  .trazo--brillo {
+    stroke: #ffc45a;
+    stroke-width: 8;
+    opacity: min(0.35, calc(var(--trace) * 14));
+  }
 
   .espiritu {
-    opacity: calc(var(--glow) * 0.92);
+    opacity: var(--glow);
   }
 
   .halo {
     opacity: calc(var(--glow) * 0.55);
     animation: respira 3.2s ease-in-out infinite;
-    transform-origin: 1260px 520px;
-  }
-
-  /* The painted shading, multiplied over the gold: ears, legs and face stay readable */
-  .relieve {
-    mix-blend-mode: multiply;
-    opacity: calc(var(--glow) * 0.85);
-  }
-
-  .ojo {
-    fill: #7a3c08;
-    opacity: calc(var(--glow) * 0.5);
   }
 
   @keyframes respira {

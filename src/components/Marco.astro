@@ -42,21 +42,35 @@ const pieces = corners.map((corner, i) => ({
             ))}
           </g>
         ));
+      // Every depth and every swaying vine is its own picture: its ink filter is
+      // painted once, and the parallax and the sway only move layers on the GPU
+      const capa = (cls: string, body: any, style?: string) => (
+        <svg class={`capa ${cls}`} viewBox="0 0 500 500" style={style}>
+          <g class="tinta">{body}</g>
+        </svg>
+      );
       return (
-        <svg class={`esquina esquina--${corner}`} viewBox="0 0 500 500" preserveAspectRatio={corner[0] === 't' ? 'xMinYMin meet' : 'xMinYMax meet'}>
-          <g class="lejos">{leafPaths(piece.far.leaves)}</g>
-          <g class="cerca">
-            {piece.near.sway.map((s, k) => (
-              <g class="mece" style={`transform-origin: ${s.ox}px ${s.oy}px; --d: ${5 + (k % 3) * 1.3}s; --k: ${k}`}>
+        <div class={`esquina esquina--${corner}`}>
+          {capa('lejos', leafPaths(piece.far.leaves))}
+          {piece.near.sway.map((s, k) =>
+            capa(
+              'cerca mece',
+              <>
                 <path class="tallo" d={s.d} />
                 {leafPaths(s.leaves)}
                 {flowers(s.flowers)}
-              </g>
-            ))}
-            {leafPaths(piece.near.leaves)}
-            {flowers(piece.near.flowers)}
-          </g>
-        </svg>
+              </>,
+              `transform-origin: ${s.ox / 5}% ${s.oy / 5}%; --d: ${5 + (k % 3) * 1.3}s; --k: ${k}`,
+            ),
+          )}
+          {capa(
+            'cerca',
+            <>
+              {leafPaths(piece.near.leaves)}
+              {flowers(piece.near.flowers)}
+            </>,
+          )}
+        </div>
       );
     })
   }
@@ -80,8 +94,15 @@ const pieces = corners.map((corner, i) => ({
     width: clamp(200px, 40vw, 640px);
     height: auto;
     aspect-ratio: 1;
-    overflow: visible;
     transition: translate 600ms var(--ease);
+  }
+  .capa {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    will-change: transform;
   }
   .esquina--tl { top: 0; left: 0; }
   .esquina--tr { top: 0; right: 0; scale: -1 1; }
@@ -104,6 +125,8 @@ const pieces = corners.map((corner, i) => ({
   }
   .cerca {
     translate: 0 calc((var(--p, 0.5) - 0.5) * -32px);
+  }
+  .cerca .tinta {
     filter: url(#trazo);
   }
   .esquina--tl .lejos,

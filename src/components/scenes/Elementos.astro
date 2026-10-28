@@ -82,6 +82,20 @@ import { strings } from '../../i18n';
   const prints = $$('[data-print]', scene).map((el) => ({ el, state: '' }));
   const STEP = at.length > 1 ? at[1] - at[0] : 0.1;
 
+  // Load and decode the prints a screen ahead, so they don't stall the scroll
+  // the moment they fall into view
+  new IntersectionObserver(
+    ([entry], io) => {
+      if (!entry.isIntersecting) return;
+      io.disconnect();
+      $$<HTMLImageElement>('[data-print] img', scene).forEach((img) => {
+        img.loading = 'eager';
+        img.decode().catch(() => {});
+      });
+    },
+    { rootMargin: '100% 0px' },
+  ).observe(scene);
+
   onProgress(scene, (p) => {
     prints.forEach((print, i) => {
       // Each print falls during the first third of its step and settles in place
@@ -174,9 +188,7 @@ import { strings } from '../../i18n';
       0 16px 32px rgb(35 25 15 / 0.18);
     opacity: 0;
     transform: translateY(110vh) rotate(var(--r));
-    transition:
-      transform 500ms var(--ease),
-      box-shadow 500ms var(--ease);
+    transition: transform 500ms var(--ease);
     will-change: transform;
   }
   .print.is-current {

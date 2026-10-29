@@ -1,5 +1,6 @@
 ---
 import { BASE } from '../../scripts/base';
+import { PHONE } from '../../scripts/telefono';
 /**
  * The marigold path, from the door of the house to the altar, at night.
  *
@@ -23,17 +24,20 @@ const ART = { w: 1200, h: 480 };
 <section data-pintada data-funde="arriba abajo" class="scene camino" data-scene="camino" data-theme="noche" data-chapter="elementos" style="--len: 560">
   <div class="stage">
     <div class="world" data-world data-art={JSON.stringify(ART)}>
-      <img
-        class="pintura"
-        src={`${BASE}/images/camino-2800.webp`}
-        srcset={`${BASE}/images/camino-1600.webp 1600w, ${BASE}/images/camino-2800.webp 2800w, ${BASE}/images/camino-4000.webp 4000w`}
-        sizes="max(100vw, 250lvh)"
-        alt={t.alt}
-        width="4000"
-        height="1600"
-        fetchpriority="low"
-        decoding="async"
-      />
+      <picture>
+        <source media={PHONE} srcset={`${BASE}/images/camino-1600.webp 1600w, ${BASE}/images/camino-2800.webp 2800w`} sizes="max(100vw, 250lvh)" />
+        <img
+          class="pintura"
+          src={`${BASE}/images/camino-2800.webp`}
+          srcset={`${BASE}/images/camino-1600.webp 1600w, ${BASE}/images/camino-2800.webp 2800w, ${BASE}/images/camino-4000.webp 4000w`}
+          sizes="max(100vw, 250lvh)"
+          alt={t.alt}
+          width="4000"
+          height="1600"
+          fetchpriority="low"
+          decoding="async"
+        />
+      </picture>
     </div>
     <canvas class="capa" data-velo aria-hidden="true"></canvas>
     <canvas class="capa" data-luces aria-hidden="true"></canvas>
@@ -59,6 +63,7 @@ const ART = { w: 1200, h: 480 };
   import { $ } from '../../scripts/dom';
   import { clamp, onProgress, onResize, reducedMotion } from '../../scripts/scenes';
   import { polvo } from '../../scripts/polvo';
+  import { canvasDpr } from '../../scripts/telefono';
 
   const scene = $('[data-scene="camino"]')!;
   const world = $('[data-world]', scene)!;
@@ -151,7 +156,7 @@ const ART = { w: 1200, h: 480 };
   function measure() {
     vw = scene.clientWidth;
     vh = window.innerHeight;
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    dpr = canvasDpr();
     worldW = Math.max(vw, vh * (ART.w / ART.h));
     scale = worldW / ART.w;
     world.style.width = `${worldW}px`;

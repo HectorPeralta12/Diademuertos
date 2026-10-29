@@ -14,6 +14,7 @@
 import { marigold, LOOSE_PETALS, EDGE } from './marigold';
 import piezas from './cempasuchil.json';
 import { withBase } from './base';
+import { canvasDpr } from './telefono';
 
 const load = (src: string) => {
   const img = new Image();
@@ -104,7 +105,7 @@ export function florecer(canvas: HTMLCanvasElement) {
   let dpr = 1;
 
   function layout() {
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    dpr = canvasDpr();
     w = canvas.clientWidth;
     h = canvas.clientHeight;
     canvas.width = Math.round(w * dpr);

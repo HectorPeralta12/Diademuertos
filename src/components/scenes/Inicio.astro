@@ -1,5 +1,6 @@
 ---
 import { BASE } from '../../scripts/base';
+import { PHONE } from '../../scripts/telefono';
 /**
  * Opening: the Xolo keeps watch, its painting kept alive in code (stars,
  * falling petals, candles, a blink). As you scroll, the copy leaves and the
@@ -23,13 +24,19 @@ const t = strings(Astro.currentLocale).inicio;
 <section data-pintada class="scene inicio" id="inicio" data-scene="inicio" data-theme="noche" data-chapter="ofrenda" style="--len: 380" data-hold={HOLD}>
   <div class="stage" style={`--hold: ${HOLD}; --sx: ${STAR.x * 100}%; --sy: ${STAR.y * 100}%; --ax: ${ALTAR_TOP.x * 100}%; --ay: ${ALTAR_TOP.y * 100}%`}>
     <div class="art" aria-hidden="true" data-art>
-      <img src={`${BASE}/images/xolo-hero.webp`} srcset={`${BASE}/images/xolo-hero.webp 1672w, ${BASE}/images/xolo-hero@2x.webp 3344w`} sizes="max(100vw, 177.7vh)" alt="" width="1672" height="941" fetchpriority="high" decoding="async" />
+      <picture>
+        <source media={PHONE} srcset={`${BASE}/images/xolo-hero.webp 1672w, ${BASE}/images/xolo-hero-2400.webp 2400w`} sizes="max(100vw, 177.7vh)" />
+        <img src={`${BASE}/images/xolo-hero.webp`} srcset={`${BASE}/images/xolo-hero.webp 1672w, ${BASE}/images/xolo-hero@2x.webp 3344w`} sizes="max(100vw, 177.7vh)" alt="" width="1672" height="941" fetchpriority="high" decoding="async" />
+      </picture>
       <canvas data-ambience></canvas>
     </div>
 
     <!-- The same painting and framing as the altar scene's first view -->
     <div class="altar" aria-hidden="true" data-altar>
-      <img src={`${BASE}/images/altar-general-4k.webp`} alt="" width="1669" height="942" decoding="async" fetchpriority="low" />
+      <picture>
+        <source media={PHONE} srcset={`${BASE}/images/altar-general-2560.webp`} />
+        <img src={`${BASE}/images/altar-general-4k.webp`} alt="" width="1669" height="942" decoding="async" fetchpriority="low" />
+      </picture>
     </div>
 
     <!-- Cempasúchil that blooms over the screen and opens to show the altar -->

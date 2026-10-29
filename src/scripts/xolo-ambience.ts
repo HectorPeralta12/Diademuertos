@@ -9,6 +9,7 @@
 import { drawSparkle, twinkle } from './sparkle';
 import piezas from './cempasuchil.json';
 import { withBase } from './base';
+import { canvasDpr } from './telefono';
 
 // Painted petals from the cempasúchil sheet; a drawn petal stands in until they load
 const PAINTED = piezas.petalo.map((p) => {
@@ -93,7 +94,7 @@ export function ambience(canvas: HTMLCanvasElement, still: boolean) {
 
   let scale = 1;
   function resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = canvasDpr();
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;
     if (!w || !h) return;

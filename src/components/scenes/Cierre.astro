@@ -1,5 +1,6 @@
 ---
 import { BASE } from '../../scripts/base';
+import { PHONE } from '../../scripts/telefono';
 import { lang, strings } from '../../i18n';
 /**
  * Closing: back to the Xolo under the stars, a farewell and the sources.
@@ -21,7 +22,10 @@ const sources = HREFS.map((href, i) => ({ href, label: t.sourceLabels[i] }));
 
 <section data-pintada data-funde="arriba" class="scene cierre" data-scene="cierre" data-theme="noche" data-chapter="preguntas" style="--len: 200">
   <div class="stage">
-    <img class="sky" src={`${BASE}/images/xolo-hero.webp`} srcset={`${BASE}/images/xolo-hero.webp 1672w, ${BASE}/images/xolo-hero@2x.webp 3344w`} sizes="max(100vw, 177.7vh)" alt={t.alt} loading="lazy" decoding="async" />
+    <picture>
+      <source media={PHONE} srcset={`${BASE}/images/xolo-hero.webp 1672w, ${BASE}/images/xolo-hero-2400.webp 2400w`} sizes="max(100vw, 177.7vh)" />
+      <img class="sky" src={`${BASE}/images/xolo-hero.webp`} srcset={`${BASE}/images/xolo-hero.webp 1672w, ${BASE}/images/xolo-hero@2x.webp 3344w`} sizes="max(100vw, 177.7vh)" alt={t.alt} loading="lazy" decoding="async" />
+    </picture>
     <div class="shade" aria-hidden="true"></div>
 
     <div class="farewell">

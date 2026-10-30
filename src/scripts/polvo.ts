@@ -7,6 +7,7 @@
  */
 
 import { drawSparkle } from './sparkle';
+import { canvasDpr } from './telefono';
 
 interface Mote { x: number; y: number; vx: number; vy: number; life: number; age: number; r: number; glint: boolean; hue: number }
 
@@ -21,7 +22,7 @@ export function polvo(canvas: HTMLCanvasElement, viewBox?: { x: number; y: numbe
   let dpr = 1;
 
   function resize() {
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    dpr = canvasDpr();
     canvas.width = Math.round(canvas.clientWidth * dpr);
     canvas.height = Math.round(canvas.clientHeight * dpr);
     if (!viewBox) {

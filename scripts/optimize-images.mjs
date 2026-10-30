@@ -7,6 +7,11 @@ const images = [
   // The upscaled painting (4×), served at the original size and at 2× for dense screens
   ['assets/xolo/hero_upscaled.webp', 'xolo-hero.webp', 1672],
   ['assets/xolo/hero_upscaled.webp', 'xolo-hero@2x.webp', 3344],
+  // Phones get lighter copies of the big paintings: decoded, the full ones ran
+  // Safari out of memory and it reloaded the page mid-scroll
+  ['assets/xolo/hero_upscaled.webp', 'xolo-hero-2400.webp', 2400],
+  ['assets/altar/cielo_upscaled.webp', 'cielo-1200.webp', 1200],
+  ['assets/altar/altar-general-4k.png', 'altar-general-2560.webp', 2560],
   // The tall night sky behind the 2D sections
   ['assets/altar/cielo_upscaled.webp', 'cielo-900.webp', 900],
   ['assets/altar/cielo_upscaled.webp', 'cielo-1600.webp', 1600],
@@ -16,11 +21,14 @@ const images = [
   ['assets/altar/checkpoints-pictoricos-v2/02-comida-agua.png', 'altar-comida-agua.webp'],
   ['assets/altar/checkpoints-pictoricos-v2/03-retratos-papel-picado.png', 'altar-retratos-papel-picado.webp'],
 ];
+// `node scripts/optimize-images.mjs a.webp b.webp` only (re)builds those
+const only = process.argv.slice(2);
 const output = new URL('public/images/', root);
 await mkdir(output, { recursive: true });
 const manifest = [];
 
 for (const [source, filename, width] of images) {
+  if (only.length && !only.includes(filename)) continue;
   const sourcePath = fileURLToPath(new URL(source, root));
   const targetPath = fileURLToPath(new URL(filename, output));
   const result = await sharp(sourcePath)
@@ -39,4 +47,4 @@ for (const [source, filename, width] of images) {
   console.log(`${filename}: ${result.width} × ${result.height}, ${(result.size / 1024).toFixed(0)} KB`);
 }
 
-await writeFile(new URL('manifest.json', output), `${JSON.stringify(manifest, null, 2)}\n`);
+if (!only.length) await writeFile(new URL('manifest.json', output), `${JSON.stringify(manifest, null, 2)}\n`);

@@ -7,6 +7,7 @@
  */
 
 import { drawSparkle, twinkle } from './sparkle';
+import { canvasDpr } from './telefono';
 
 interface Star { x: number; y: number; r: number; phase: number; speed: number; flare: boolean; depth: number }
 
@@ -40,7 +41,7 @@ export function cielo(canvas: HTMLCanvasElement, still: boolean) {
   let h = 0;
   let dpr = 1;
   function resize() {
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    dpr = canvasDpr();
     w = canvas.clientWidth;
     h = canvas.clientHeight;
     canvas.width = Math.round(w * dpr);

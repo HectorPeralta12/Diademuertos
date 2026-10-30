@@ -9,7 +9,7 @@ import { BASE } from '../../scripts/base';
 import { strings } from '../../i18n';
 
 // The light copy (already loaded by the opening) shows first; the 4K one takes over when ready
-const IMAGE = { src: `${BASE}/images/altar-general.webp`, hd: `${BASE}/images/altar-general-4k.webp` };
+const IMAGE = { src: `${BASE}/images/altar-general.webp`, hd: `${BASE}/images/altar-general-4k.webp`, hdPhone: `${BASE}/images/altar-general-2560.webp` };
 
 const t = strings(Astro.currentLocale).ofrenda;
 // Camera framings (x, y, width) for each view; the words come from the language
@@ -61,7 +61,7 @@ const beat = (i: number) => {
   <div class="stage">
     <div class="views" aria-hidden="true" data-camera>
       <img class="view" src={IMAGE.src} alt="" decoding="async" />
-      <img class="view hd" data-hd={IMAGE.hd} alt="" decoding="async" />
+      <img class="view hd" data-hd={IMAGE.hd} data-hd-phone={IMAGE.hdPhone} alt="" decoding="async" />
     </div>
 
     <ol class="captions stack">
@@ -88,6 +88,7 @@ const beat = (i: number) => {
 <script>
   import { $ } from '../../scripts/dom';
   import { clamp, onProgress } from '../../scripts/scenes';
+  import { PHONE } from '../../scripts/telefono';
 
   type Segment = { kind: 'hold' | 'fly'; i: number; from: number; to: number };
   type Rect = [number, number, number];
@@ -102,10 +103,11 @@ const beat = (i: number) => {
   const camera = $('[data-camera]', scene)!;
   const hd = $<HTMLImageElement>('[data-hd]', scene)!;
 
-  // Swap in the 4K painting once it has loaded and decoded
+  // Swap in the sharp painting once it has loaded and decoded: 4K, or a lighter
+  // copy on phones (the same one the opening shows there)
   const load = () => {
     if (hd.src) return;
-    hd.src = hd.dataset.hd!;
+    hd.src = window.matchMedia(PHONE).matches ? hd.dataset.hdPhone! : hd.dataset.hd!;
     hd.decode().then(() => hd.classList.add('is-ready')).catch(() => {});
   };
   if (document.readyState === 'complete') load();
